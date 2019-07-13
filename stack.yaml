@@ -3,4 +3,5 @@ packages:
 - .
 extra-deps:
 - massiv-0.3.6.0@sha256:331a1cdd26413e068fbc98d3df2b45f9b7a62d67901b8d929643aef4ff777eee
+- microlens-0.4.11.2@sha256:765ec5cdd12a459e65161f0e3cdbce84652bf634d62af3911ba24e4bf8d4d944
 - scheduler-1.4.1@sha256:0676a4e31ac2b7567efa92a7ad6b1de13af7cd5f81140c2f56b671bc271b1211
