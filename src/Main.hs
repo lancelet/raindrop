@@ -97,9 +97,9 @@ solveCubic2 approxZero a' b' c' d'
   | discriminant <= 0 = filter tInRange [ root1, root2, root3 ]
   | otherwise         = filter tInRange [ singleRoot ]
   where
-    a = a' / d'
-    b = b' / d'
-    c = c' / d'
+    a = b' / a'
+    b = c' / a'
+    c = d' / a'
 
     p = (3*b - a*a)/3
     p3 = p/3
@@ -268,8 +268,8 @@ bezier3SDFSeg b@(Bezier3 p1 p2 p3 p4) = SDFSeg { windingNumber, distanceTo }
         wn t = if (bezier3Tangent b t)^._y > 0 then -1 else 1
         tInRange t = (t >= 0) && (t <= 1)
         rightOfX t = (evalBezier3 b t)^._x > pt^._x
-        intersections = {-filter rightOfX
-                        $-} filter tInRange
+        intersections = filter rightOfX
+                        $ filter tInRange
                         $ bezier3Roots (p1^._y-y) (p2^._y-y) (p3^._y-y) (p4^._y-y)
 
     distanceTo :: Pt a -> a

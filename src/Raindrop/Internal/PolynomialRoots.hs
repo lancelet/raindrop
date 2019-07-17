@@ -140,7 +140,7 @@ solveCubic nearZero a' b' c' d'
       cuberoot x
         | x < 0     = -((-x)**(1/3))
         | otherwise = x**(1/3)
-      (a, b, c) = (a'/d', b'/d', c'/d')
+      (a, b, c) = (b'/a', c'/a', d'/a')
       p    = (3*b - a*a)/3
       p3   = p/3
       q    = (2*a*a*a - 9*a*b + 27*c)/27
@@ -148,6 +148,15 @@ solveCubic nearZero a' b' c' d'
       disc = q2*q2 + p3*p3*p3
       a3   = a/3
       roots
+        | nearZero disc =
+          let
+            u1
+              | q2 < 0    = cuberoot (-q2)
+              | otherwise = -(cuberoot q2)
+            root1 = 2*u1 - a3
+            root2 = -u1 - a3
+          in
+            M3Two root1 root2
         | disc < 0 =
           let
             mp3   = -p/3
@@ -162,15 +171,6 @@ solveCubic nearZero a' b' c' d'
             root3 = t1*cos((phi + 4*pi)/3) - a3
           in
             M3Three root1 root2 root3
-        | nearZero disc =
-          let
-            u1
-              | q2 < 0    = cuberoot (-q2)
-              | otherwise = -(cuberoot q2)
-            root1 = 2*u1 - a3
-            root2 = -u1 - a3
-          in
-            M3Two root1 root2
         | otherwise =
           let
             sd    = sqrt disc

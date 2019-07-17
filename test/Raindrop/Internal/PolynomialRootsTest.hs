@@ -130,14 +130,13 @@ testsCubic = Tasty.testGroup "cubic equation roots"
 -- | Check that solutions returned for a cubic are actually solutions.
 prop_cubicSolutions :: HH.Property
 prop_cubicSolutions = HH.property $ do
-  let gen = Gen.float (Range.linearFrac -100 100)
-  a <- HH.forAll gen
-  b <- HH.forAll gen
-  c <- HH.forAll gen
-  d <- HH.forAll gen
+  a <- HH.forAll $ Gen.double (Range.linearFrac -10 -3)
+  b <- HH.forAll $ Gen.double (Range.linearFrac 3 10)
+  c <- HH.forAll $ Gen.double (Range.linearFrac -10 -3)
+  d <- HH.forAll $ Gen.double (Range.linearFrac 3 10)
   let
     q t = a*t*t*t + b*t*t + c*t + d
-    approxOk t = approxEq' 20.0 0 (q t)
+    approxOk t = approxEq' 1e-5 0 (q t)
   HH.annotate $ "On failure: "
     <> "Roots: " <> show (solveCubic nearZero a b c d) <> ". "
     <> "Cubic evaluated at roots: "
