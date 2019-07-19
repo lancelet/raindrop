@@ -12,6 +12,7 @@ module Raindrop.Internal.Geom.Vec
   , p2v
   , v2p
   , scalarCross
+  , normalize
     -- * Lenses
   , _x
   , _y
@@ -19,10 +20,11 @@ module Raindrop.Internal.Geom.Vec
   , (.-.)
   , (*^)
   , (^+^)
+  , (^-^)
   ) where
 
 import           Control.Lens  ((^.))
-import           Linear        (_x, _y, (*^), (^+^))
+import           Linear        (_x, _y, (*^), (^+^), (^-^), normalize)
 import qualified Linear
 import           Linear.Affine ((.-.))
 import qualified Linear.Affine

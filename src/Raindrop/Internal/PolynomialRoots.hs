@@ -7,7 +7,7 @@ Some algorithms from https://pomax.github.io/bezierinfo
 Point in polygon:
   http://geomalgorithms.com/a03-_inclusion.html
 -}
-{-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE DeriveFunctor    #-}
 {-# LANGUAGE NegativeLiterals #-}
 module Raindrop.Internal.PolynomialRoots
   ( -- * Types
@@ -22,6 +22,7 @@ module Raindrop.Internal.PolynomialRoots
   , maybeTwoToList
   , maybeThreeToList
   -- , filterMaybeTwo
+  , filterMaybeThree
   ) where
 
 import           Raindrop.Internal.Interval (clamp, mkClosedInterval)
@@ -101,12 +102,23 @@ data MaybeThree a
   | M3Three a a a
   deriving (Show, Eq, Functor)
 
+instance Foldable MaybeThree where
+  foldMap _ M3None          = mempty
+  foldMap f (M3One x)       = f x
+  foldMap f (M3Two x y)     = f x <> f y
+  foldMap f (M3Three x y z) = f x <> f y <> f z
+
+  foldr _ z M3None          = z
+  foldr f z (M3One x)       = x `f` z
+  foldr f z (M3Two x y)     = x `f` (y `f` z)
+  foldr f z (M3Three a b c) = a `f` (b `f` (c `f` z))
+
 
 -- | Convert a 'MaybeThree' to a list.
 maybeThreeToList :: MaybeThree a -> [a]
-maybeThreeToList M3None = []
-maybeThreeToList (M3One x) = [x]
-maybeThreeToList (M3Two x y) = [x, y]
+maybeThreeToList M3None          = []
+maybeThreeToList (M3One x)       = [x]
+maybeThreeToList (M3Two x y)     = [x, y]
 maybeThreeToList (M3Three x y z) = [x, y, z]
 {-# INLINE maybeThreeToList #-}
 
@@ -181,3 +193,22 @@ solveCubic nearZero a' b' c' d'
             M3One root1
     in roots
 {-# INLINE solveCubic #-}
+
+
+filterMaybeThree :: (a -> Bool) -> MaybeThree a -> MaybeThree a
+filterMaybeThree _ M3None = M3None
+filterMaybeThree p s@(M3One x)
+  | p x       = s
+  | otherwise = M3None
+filterMaybeThree p s@(M3Two x y)
+  | p x       = if p y then s else M3One x
+  | p y       = M3One y
+  | otherwise = M3None
+filterMaybeThree p s@(M3Three x y z)
+  | p x       = if p y
+                then if p z then s else M3Two x y
+                else if p z then M3Two x z else M3One x
+  | p y       = if p z then M3Two y z else M3One y
+  | p z       = M3One z
+  | otherwise = M3None
+{-# INLINE filterMaybeThree #-}
