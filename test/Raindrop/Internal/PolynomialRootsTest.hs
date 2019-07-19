@@ -19,7 +19,7 @@ import           Test.Tasty.Hedgehog               (testProperty)
 import           Data.Ratio                        ((%))
 import           Linear.Epsilon                    (nearZero)
 
-import           Raindrop.Internal.PolynomialRoots (MaybeTwo (M2None, M2One, M2Two),
+import           Raindrop.Internal.PolynomialRoots (MaybeTwo (M2None, M2One),
                                                     maybeThreeToList,
                                                     maybeTwoToList, solveCubic,
                                                     solveLinear, solveQuadratic)

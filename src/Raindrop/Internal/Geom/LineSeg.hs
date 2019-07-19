@@ -3,16 +3,19 @@ Module      : Raindrop.Internal.Geom.LineSeg
 Description : Line segment.
 -}
 module Raindrop.Internal.Geom.LineSeg
-  (
+  ( -- * Types
+    LineSeg(LineSeg)
+    -- * Functions
+  , bound
+  , windingNum
   ) where
 
 import           Control.Lens                 ((^.))
 
 import           Raindrop.Internal.Geom.Bound (BBox, mkBBox)
-import           Raindrop.Internal.Geom.Vec   (P, V, scalarCross, (.-.), _y)
+import           Raindrop.Internal.Geom.Vec   (P, scalarCross, (.-.), _y)
 import           Raindrop.Internal.Interval   (Boundary (Closed, Open),
-                                               Interval, inRange,
-                                               mkClosedInterval, mkInterval)
+                                               Interval, inRange, mkInterval)
 
 
 -- | Line segment.

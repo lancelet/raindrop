@@ -23,10 +23,10 @@ data Boundary
 -- | Interval.
 data Interval a
   = Interval
-    { start         :: a
-    , startBoundary :: Boundary
-    , end           :: a
-    , endBounary    :: Boundary
+    { _start         :: a
+    , _startBoundary :: Boundary
+    , _end           :: a
+    , _endBounary    :: Boundary
     }
 
 

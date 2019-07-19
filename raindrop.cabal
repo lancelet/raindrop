@@ -33,6 +33,12 @@ library
     , massiv    ^>=0.3.6.0
     , massiv-io ^>=0.1.6.0
     , microlens ^>=0.4.11.2
+  ghc-options:
+    -O2
+    -Wall
+    -Wincomplete-uni-patterns
+    -Wincomplete-record-updates
+    -Wmissing-import-lists
 
 test-suite tests
   type:              exitcode-stdio-1.0
