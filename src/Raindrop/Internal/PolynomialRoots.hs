@@ -24,7 +24,7 @@ module Raindrop.Internal.PolynomialRoots
   -- , filterMaybeTwo
   ) where
 
-import           Raindrop.Internal.Interval (clamp, mkInterval)
+import           Raindrop.Internal.Interval (clamp, mkClosedInterval)
 
 -- | Solves @c*x + d = 0@ for @x@.
 --
@@ -163,7 +163,7 @@ solveCubic nearZero a' b' c' d'
             mp33  = mp3*mp3*mp3
             r     = sqrt mp33
             t     = -q/(2*r)
-            phi   = acos $ clamp (mkInterval -1 1) t
+            phi   = acos $ clamp (mkClosedInterval -1 1) t
             crtr  = cuberoot r
             t1    = 2*crtr
             root1 = t1*cos(phi/3) - a3
