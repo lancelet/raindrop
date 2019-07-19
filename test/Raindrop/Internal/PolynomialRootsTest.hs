@@ -20,9 +20,9 @@ import           Data.Ratio                        ((%))
 import           Linear.Epsilon                    (nearZero)
 
 import           Raindrop.Internal.PolynomialRoots (MaybeTwo (M2None, M2One, M2Two),
-                                                    maybeTwoToList, solveLinear,
-                                                    solveQuadratic, maybeThreeToList,
-                                                    solveCubic)
+                                                    maybeThreeToList,
+                                                    maybeTwoToList, solveCubic,
+                                                    solveLinear, solveQuadratic)
 
 
 -- | All module tests.

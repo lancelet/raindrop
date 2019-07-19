@@ -5,8 +5,8 @@ Description : Mathematics operations on intervals.
 module Raindrop.Internal.Interval
   ( -- * Types
     Interval
-  , -- * Functions
-    mkInterval
+    -- * Functions
+  , mkInterval
   , clamp
   ) where
 
