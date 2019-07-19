@@ -89,9 +89,8 @@ windingNum bez@(Bezier3 pa pb pc pd) p = sum $ fmap wn ts
     ts' = solveCubic nearZero a b c d
     ts = filterMaybeThree inBezierParamRange ts'
 
-    wn t = if onLeft t then 1 else -1
-
-    onLeft t = (tangent bez t) `scalarCross` (v ^-^ vx) > 0
+    wn t = if onLeft then 1 else -1
       where
+        onLeft = (tangent bez t) `scalarCross` (v ^-^ vx) > 0
         vx = p2v $ eval bez t
 {-# INLINE windingNum #-}
