@@ -19,7 +19,9 @@ library
   -- other-modules:
   -- other-extensions:
   exposed-modules:
-      Raindrop.Internal.Geom.Bound
+      Raindrop.Internal.Geom.Bezier2
+    , Raindrop.Internal.Geom.Bezier3
+    , Raindrop.Internal.Geom.Bound
     , Raindrop.Internal.Geom.LineSeg
     , Raindrop.Internal.Geom.Vec
     , Raindrop.Internal.Interval
