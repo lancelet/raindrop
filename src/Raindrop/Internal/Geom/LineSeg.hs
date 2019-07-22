@@ -58,5 +58,5 @@ windingNum ls@(LineSeg p1 p2) p
   | inRange (yInterval ls) (p^._y) = if onLeft then 1 else -1
   | otherwise                      = 0
   where
-    onLeft = (p2 .-. p1) `scalarCross` (p .-. p1) > 0
+    onLeft = (p2 .-. p1) `scalarCross` (p .-. p1) < 0
 {-# INLINE windingNum #-}

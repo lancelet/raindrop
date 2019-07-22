@@ -83,7 +83,7 @@ inBatSymbol = Massiv.makeArray Seq (Sz (365 :. 581)) gen
   where
     gen (j :. i) = if inPath batSymbol pt then 255 else 0
       where
-        pt = mkP (0.5 + fromIntegral i) (0.5 + fromIntegral j)
+        pt = mkP (fromIntegral i) (fromIntegral j)
 
 
 main :: IO ()

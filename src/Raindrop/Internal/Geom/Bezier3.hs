@@ -62,7 +62,7 @@ deriv (Bezier3 pa pb pc pd) = Bezier2 pa' pb' pc'
 
 
 inBezierParamRange :: (Ord a, Num a) => a -> Bool
-inBezierParamRange x = (x >= 0) && (x <= 1)
+inBezierParamRange t = (t >= 0) && (t <= 1)
 {-# INLINE inBezierParamRange #-}
 
 
@@ -71,7 +71,7 @@ tangent b t = normalize $ p2v $ Bezier2.eval (deriv b) t
 {-# INLINE tangent #-}
 
 
-windingNum :: (Ord a, Floating a, Epsilon a) => Bezier3 a -> P a -> Int
+windingNum :: (Ord a, RealFrac a, Floating a, Epsilon a) => Bezier3 a -> P a -> Int
 windingNum bez@(Bezier3 pa pb pc pd) p = sum $ fmap wn ts
   where
     v  = p2v p
@@ -89,8 +89,21 @@ windingNum bez@(Bezier3 pa pb pc pd) p = sum $ fmap wn ts
     ts' = solveCubic nearZero a b c d
     ts = filterMaybeThree inBezierParamRange ts'
 
-    wn t = if onLeft then 1 else -1
+    wn t
+      | excludedEnd = 0
+      | otherwise   = if onLeft then 1 else -1
       where
-        onLeft = (tangent bez t) `scalarCross` (v ^-^ vx) > 0
+        tgt = tangent bez t
+        excludedEnd = (curPx == startPx && tgt^._y < 0) || (curPx == endPx && tgt ^._y > 0)
+        onLeft = tgt `scalarCross` (v ^-^ vx) < 0
         vx = p2v $ eval bez t
+
+        curPx :: P Int
+        curPx = floor <$> eval bez t
+
+        startPx :: P Int
+        startPx = floor <$> eval bez 0
+
+        endPx :: P Int
+        endPx = floor <$> eval bez 1
 {-# INLINE windingNum #-}

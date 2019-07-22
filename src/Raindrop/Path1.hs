@@ -29,7 +29,7 @@ data SDFComponent a
     { windingNum :: P a -> Int }
 
 
-pathToSDF :: (Ord a, Floating a, Epsilon a) => Path a -> [SDFComponent a]
+pathToSDF :: (Ord a, RealFrac a, Floating a, Epsilon a) => Path a -> [SDFComponent a]
 pathToSDF (Path _ []) = []
 pathToSDF (Path o (c:cs)) = s : pathToSDF (Path o' cs)
   where
@@ -40,5 +40,5 @@ pathToSDF (Path o (c:cs)) = s : pathToSDF (Path o' cs)
         (SDFComponent { windingNum = Bezier3.windingNum (Bezier3 o pb pc pd) }, pd)
 
 
-inPath :: (Ord a, Floating a, Epsilon a) => Path a -> P a -> Bool
-inPath path p = (sum $ fmap (`windingNum` p) $ pathToSDF path) > 0
+inPath :: (Ord a, RealFrac a, Floating a, Epsilon a) => Path a -> P a -> Bool
+inPath path p = (sum $ fmap (`windingNum` p) $ pathToSDF path) /= 0
