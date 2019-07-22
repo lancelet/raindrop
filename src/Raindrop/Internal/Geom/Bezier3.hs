@@ -2,6 +2,7 @@
 Module      : Raindrop.Internal.Geom.Bezier3
 Description : Cubic Bezier curves.
 -}
+{-# LANGUAGE NegativeLiterals #-}
 module Raindrop.Internal.Geom.Bezier3
   ( -- * Types
     Bezier3(Bezier3)
@@ -61,8 +62,13 @@ deriv (Bezier3 pa pb pc pd) = Bezier2 pa' pb' pc'
 {-# INLINE deriv #-}
 
 
-inBezierParamRange :: (Ord a, Num a) => a -> Bool
-inBezierParamRange t = (t >= 0) && (t <= 1)
+{-
+This is a bit of a hack. For this to work reliably, I will probably have to
+split Beziers in advance so that they don't extend beyond a certain number
+of pixels.
+-}
+inBezierParamRange :: (Ord a, Fractional a) => a -> Bool
+inBezierParamRange t = (t >= -0.000001) && (t <= 1.000001)
 {-# INLINE inBezierParamRange #-}
 
 
@@ -89,21 +95,8 @@ windingNum bez@(Bezier3 pa pb pc pd) p = sum $ fmap wn ts
     ts' = solveCubic nearZero a b c d
     ts = filterMaybeThree inBezierParamRange ts'
 
-    wn t
-      | excludedEnd = 0
-      | otherwise   = if onLeft then 1 else -1
+    wn t = if onLeft then 1 else -1
       where
-        tgt = tangent bez t
-        excludedEnd = (curPx == startPx && tgt^._y < 0) || (curPx == endPx && tgt ^._y > 0)
-        onLeft = tgt `scalarCross` (v ^-^ vx) < 0
+        onLeft = tangent bez t `scalarCross` (v ^-^ vx) > 0
         vx = p2v $ eval bez t
-
-        curPx :: P Int
-        curPx = floor <$> eval bez t
-
-        startPx :: P Int
-        startPx = floor <$> eval bez 0
-
-        endPx :: P Int
-        endPx = floor <$> eval bez 1
 {-# INLINE windingNum #-}

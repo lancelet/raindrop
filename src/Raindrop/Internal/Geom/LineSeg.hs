@@ -14,8 +14,8 @@ import           Control.Lens                 ((^.))
 
 import           Raindrop.Internal.Geom.Bound (BBox, mkBBox)
 import           Raindrop.Internal.Geom.Vec   (P, scalarCross, (.-.), _y)
-import           Raindrop.Internal.Interval   (Boundary (Closed, Open),
-                                               Interval, inRange, mkInterval)
+import           Raindrop.Internal.Interval   (Interval, inRange,
+                                               mkClosedInterval)
 
 
 -- | Line segment.
@@ -41,13 +41,10 @@ isHorizontal (LineSeg p1 p2) = p1^._y == p2^._y
 --
 -- An upward edge excludes its end. A downward edge excludes its start.
 yInterval :: (Ord a) => LineSeg a -> Interval a
-yInterval (LineSeg p1 p2)
-  | upwardEdge = mkInterval (y1, Closed) (y2, Open)
-  | otherwise  = mkInterval (y1, Open)   (y2, Closed)
+yInterval (LineSeg p1 p2) = mkClosedInterval y1 y2
   where
     y1 = p1^._y
     y2 = p2^._y
-    upwardEdge = y2 > y1
 {-# INLINE yInterval #-}
 
 
@@ -58,5 +55,5 @@ windingNum ls@(LineSeg p1 p2) p
   | inRange (yInterval ls) (p^._y) = if onLeft then 1 else -1
   | otherwise                      = 0
   where
-    onLeft = (p2 .-. p1) `scalarCross` (p .-. p1) < 0
+    onLeft = (p2 .-. p1) `scalarCross` (p .-. p1) > 0
 {-# INLINE windingNum #-}

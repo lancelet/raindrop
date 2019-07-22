@@ -41,4 +41,4 @@ pathToSDF (Path o (c:cs)) = s : pathToSDF (Path o' cs)
 
 
 inPath :: (Ord a, RealFrac a, Floating a, Epsilon a) => Path a -> P a -> Bool
-inPath path p = (sum $ fmap (`windingNum` p) $ pathToSDF path) /= 0
+inPath path p = sum ((`windingNum` p) <$> pathToSDF path) /= 0
