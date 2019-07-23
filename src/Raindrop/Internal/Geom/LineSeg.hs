@@ -8,13 +8,16 @@ module Raindrop.Internal.Geom.LineSeg
     -- * Functions
   , bound
   , windingNum
+  , distanceTo
   ) where
 
 import           Control.Lens                 ((^.))
 
 import           Raindrop.Internal.Geom.Bound (BBox, mkBBox)
-import           Raindrop.Internal.Geom.Vec   (P, scalarCross, (.-.), _y)
-import           Raindrop.Internal.Interval   (Interval, inRange,
+import           Raindrop.Internal.Geom.Vec   (P, distanceA, dot, quadrance,
+                                               scalarCross, (*^), (.+^), (.-.),
+                                               _y)
+import           Raindrop.Internal.Interval   (Interval, clamp, inRange,
                                                mkClosedInterval)
 
 
@@ -57,3 +60,14 @@ windingNum ls@(LineSeg p1 p2) p
   where
     onLeft = (p2 .-. p1) `scalarCross` (p .-. p1) > 0
 {-# INLINE windingNum #-}
+
+
+distanceTo :: (Floating a, Ord a) => LineSeg a -> P a -> a
+distanceTo (LineSeg p1 p2) p =
+  let
+    v = p .-. p1
+    s = p2 .-. p1
+    t = clamp (mkClosedInterval 0 1) $ (v `dot` s) / (quadrance s)
+    p' = p1 .+^ (t *^ s)
+  in
+    distanceA p p'

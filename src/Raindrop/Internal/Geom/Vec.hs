@@ -13,6 +13,11 @@ module Raindrop.Internal.Geom.Vec
   , v2p
   , scalarCross
   , normalize
+  , qd
+  , dot
+  , distance
+  , distanceA
+  , quadrance
     -- * Lenses
   , _x
   , _y
@@ -21,12 +26,14 @@ module Raindrop.Internal.Geom.Vec
   , (*^)
   , (^+^)
   , (^-^)
+  , (.+^)
   ) where
 
 import           Control.Lens  ((^.))
-import           Linear        (_x, _y, (*^), (^+^), (^-^), normalize)
+import           Linear        (distance, dot, normalize, qd, quadrance, (*^),
+                                (^+^), (^-^), _x, _y)
 import qualified Linear
-import           Linear.Affine ((.-.))
+import           Linear.Affine ((.+^), (.-.), distanceA)
 import qualified Linear.Affine
 
 type V a = Linear.V2 a

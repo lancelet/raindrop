@@ -2,22 +2,26 @@
 Module      : Raindrop.Internal.Geom.Bezier3
 Description : Cubic Bezier curves.
 -}
-{-# LANGUAGE NegativeLiterals #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 module Raindrop.Internal.Geom.Bezier3
   ( -- * Types
     Bezier3(Bezier3)
     -- * Functions
   , windingNum
+  , distanceTo
   ) where
 
 import           Control.Lens                      ((^.))
+import           Data.Massiv.Array                 (Array, Comp (Seq), Ix1,
+                                                    Sz (Sz), U, Unbox, ifoldlS,
+                                                    makeArray, (!))
 import           Linear                            (Epsilon, nearZero)
 
 import           Raindrop.Internal.Geom.Bezier2    (Bezier2 (Bezier2))
 import qualified Raindrop.Internal.Geom.Bezier2    as Bezier2
-import           Raindrop.Internal.Geom.Vec        (P, V, normalize, p2v,
-                                                    scalarCross, v2p, (*^),
-                                                    (^+^), (^-^), _y)
+import           Raindrop.Internal.Geom.Vec        (P, V, distance, normalize,
+                                                    p2v, qd, scalarCross, v2p,
+                                                    (*^), (^+^), (^-^), _y)
 import           Raindrop.Internal.PolynomialRoots (filterMaybeThree,
                                                     solveCubic)
 
@@ -100,3 +104,58 @@ windingNum bez@(Bezier3 pa pb pc pd) p = sum $ fmap wn ts
         onLeft = tangent bez t `scalarCross` (v ^-^ vx) > 0
         vx = p2v $ eval bez t
 {-# INLINE windingNum #-}
+
+
+data MinIdxSemi a = MinIdxSemi !Ix1 !a
+instance Ord a => Semigroup (MinIdxSemi a) where
+  (<>) (MinIdxSemi i1 x1) (MinIdxSemi i2 x2)
+    | x1 <= x2  = MinIdxSemi i1 x1
+    | otherwise = MinIdxSemi i2 x2
+
+
+minIndexBy :: (Unbox a) => (a -> a -> Ordering) -> Array U Ix1 a -> Ix1
+minIndexBy cmp array = fst $ ifoldlS fn z array
+  where
+    z = (0, array ! 0)
+    fn c@(_, currentMin) i val
+      | cmp val currentMin == LT = (i, val)
+      | otherwise                =  c
+
+
+distanceTo :: forall a. (Unbox a, Floating a, Ord a) => Int -> a -> Bezier3 a -> P a -> a
+distanceTo nTabulatedPoints err bez p =
+  let
+    ptTable :: Array U Ix1 (P a)
+    ptTable = makeArray Seq (Sz nTabulatedPoints)
+              $ \i ->
+                  let
+                    t = fromIntegral i / fromIntegral (nTabulatedPoints - 1)
+                  in
+                    eval bez t
+    dt :: a
+    dt = 1 / fromIntegral (nTabulatedPoints - 1)
+  in
+    let
+      cmpDistance :: P a -> P a -> Ordering
+      cmpDistance p1 p2 = compare (qd p p1) (qd p p2)
+
+      minIx :: Ix1
+      minIx = minIndexBy cmpDistance ptTable
+
+      startBracket :: (a, a)
+      startBracket
+        | minIx == 0 = (0, dt)
+        | minIx == (nTabulatedPoints - 1) = (1-dt, 1)
+        | otherwise = (dt * fromIntegral (minIx-1), dt * fromIntegral (minIx+1))
+
+      bisect :: (a, a) -> a
+      bisect (ta, tb)
+        | abs (da - db) < err = tmid
+        | da < db             = bisect (ta, tmid)
+        | otherwise           = bisect (tmid, tb)
+        where
+          tmid = (ta + tb) / 2
+          da = qd p (eval bez ta)
+          db = qd p (eval bez tb)
+    in
+      distance p (eval bez (bisect startBracket))
