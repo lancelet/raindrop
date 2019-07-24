@@ -12,16 +12,22 @@ module Raindrop.Internal.Geom.Bezier3
   ) where
 
 import           Control.Lens                      ((^.))
+import           Control.Monad.Loops               (whileM_)
+import           Control.Monad.ST                  (runST)
 import           Data.Massiv.Array                 (Array, Comp (Seq), Ix1,
                                                     Sz (Sz), U, Unbox, ifoldlS,
                                                     makeArray, (!))
+import           Data.STRef                        (newSTRef, readSTRef,
+                                                    writeSTRef)
+import           Debug.Trace                       (traceM)
 import           Linear                            (Epsilon, nearZero)
 
 import           Raindrop.Internal.Geom.Bezier2    (Bezier2 (Bezier2))
 import qualified Raindrop.Internal.Geom.Bezier2    as Bezier2
 import           Raindrop.Internal.Geom.Vec        (P, V, distance, normalize,
                                                     p2v, qd, scalarCross, v2p,
-                                                    (*^), (^+^), (^-^), _y)
+                                                    (*^), (^+^), (^-^), _x, _y, dot)
+import           Raindrop.Internal.Interval        (clamp, mkClosedInterval)
 import           Raindrop.Internal.PolynomialRoots (filterMaybeThree,
                                                     solveCubic)
 
@@ -106,13 +112,6 @@ windingNum bez@(Bezier3 pa pb pc pd) p = sum $ fmap wn ts
 {-# INLINE windingNum #-}
 
 
-data MinIdxSemi a = MinIdxSemi !Ix1 !a
-instance Ord a => Semigroup (MinIdxSemi a) where
-  (<>) (MinIdxSemi i1 x1) (MinIdxSemi i2 x2)
-    | x1 <= x2  = MinIdxSemi i1 x1
-    | otherwise = MinIdxSemi i2 x2
-
-
 minIndexBy :: (Unbox a) => (a -> a -> Ordering) -> Array U Ix1 a -> Ix1
 minIndexBy cmp array = fst $ ifoldlS fn z array
   where
@@ -120,9 +119,10 @@ minIndexBy cmp array = fst $ ifoldlS fn z array
     fn c@(_, currentMin) i val
       | cmp val currentMin == LT = (i, val)
       | otherwise                =  c
+{-# INLINE minIndexBy #-}
 
 
-distanceTo :: forall a. (Unbox a, Floating a, Ord a) => Int -> a -> Bezier3 a -> P a -> a
+distanceTo :: forall a. (Show a, Unbox a, Floating a, Ord a, Epsilon a) => Int -> a -> Bezier3 a -> P a -> a
 distanceTo nTabulatedPoints err bez p =
   let
     ptTable :: Array U Ix1 (P a)
@@ -132,8 +132,6 @@ distanceTo nTabulatedPoints err bez p =
                     t = fromIntegral i / fromIntegral (nTabulatedPoints - 1)
                   in
                     eval bez t
-    dt :: a
-    dt = 1 / fromIntegral (nTabulatedPoints - 1)
   in
     let
       cmpDistance :: P a -> P a -> Ordering
@@ -142,20 +140,39 @@ distanceTo nTabulatedPoints err bez p =
       minIx :: Ix1
       minIx = minIndexBy cmpDistance ptTable
 
-      startBracket :: (a, a)
-      startBracket
-        | minIx == 0 = (0, dt)
-        | minIx == (nTabulatedPoints - 1) = (1-dt, 1)
-        | otherwise = (dt * fromIntegral (minIx-1), dt * fromIntegral (minIx+1))
+      initT :: a
+      initT = fromIntegral minIx / fromIntegral (nTabulatedPoints - 1)
 
-      bisect :: (a, a) -> a
-      bisect (ta, tb)
-        | abs (da - db) < err = tmid
-        | da < db             = bisect (ta, tmid)
-        | otherwise           = bisect (tmid, tb)
-        where
-          tmid = (ta + tb) / 2
-          da = qd p (eval bez ta)
-          db = qd p (eval bez tb)
+      finalT :: a
+      finalT = clamp (mkClosedInterval 0 1) $ nrMin err bez p initT
     in
-      distance p (eval bez (bisect startBracket))
+      distance p (eval bez finalT)
+{-# INLINE distanceTo #-}
+
+
+nrMin :: (Floating a, Ord a, Show a, Epsilon a) => a -> Bezier3 a -> P a -> a -> a
+nrMin eps bez p tInit =
+  let
+
+    g t = tangent bez t `dot` p2v (eval bez t - p)
+    g' t = undefined
+
+  in
+    runST $ do
+      tRef  <- newSTRef tInit
+      gtRef <- newSTRef $ g tInit
+      let run = do
+            t <- readSTRef tRef
+            if t < 0 || t > 1
+              then pure False
+              else do
+                gt <- readSTRef gtRef
+                pure (abs gt >= eps)
+      whileM_ run $ do
+        t     <- readSTRef tRef
+        gPrev <- readSTRef gtRef
+        -- traceM $ "t = " <> show t
+        let t' = t - gPrev / g' t
+        writeSTRef tRef t'
+        writeSTRef gtRef $ g t'
+      readSTRef tRef

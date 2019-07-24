@@ -12,7 +12,7 @@ import           Graphics.ColorSpace.Y      (Pixel (PixelY), Y)
 import           Raindrop.Internal.Geom.Vec (mkP)
 import           Raindrop.Path1             (Path (Path),
                                              PathCommand (CurveTo, LineTo),
-                                             inPath, pathSDF)
+                                             inPath, pathSDF, aaPath)
 
 capitalY :: Path Float
 capitalY
@@ -102,10 +102,21 @@ batSymbolSDF = Massiv.makeArray Seq (Sz (365 :. 581)) gen
         pt = mkP (fromIntegral i) (fromIntegral j)
 
 
+batSymbolAAPath :: Image S Y Word8
+batSymbolAAPath = Massiv.makeArray Seq (Sz (365 :. 581)) gen
+  where
+    gen (j :. i) = PixelY . floor $ 255 * aaPath 10 batSymbol pt
+      where
+        pt = mkP (fromIntegral i) (fromIntegral j)
+
+
 main :: IO ()
 main = do
+  {-
   Massiv.writeImage "test-in-polygon.png" inCapitalY
   Massiv.writeImage "test-in-bezier-thingo.png" inBezierThingo
   Massiv.writeImage "test-in-bat-symbol.png" inBatSymbol
   Massiv.writeImage "test-y-sdf.png" capitalYSDF
+  -}
   Massiv.writeImage "test-bat-symbol-sdf.png" batSymbolSDF
+  Massiv.writeImage "test-bat-symbol-aa-path.png" batSymbolAAPath
