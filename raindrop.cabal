@@ -48,6 +48,8 @@ test-suite tests
   type:              exitcode-stdio-1.0
   default-language:  Haskell2010
   hs-source-dirs:    test
+  other-modules:
+      Raindrop.Internal.PolynomialRootsTest
   main-is:           Test.hs
   build-depends:
       base
@@ -64,13 +66,10 @@ executable raindrop
   main-is:             Main.hs
   -- other-modules:
   -- other-extensions:
-  hs-source-dirs:      src
+  hs-source-dirs:      app
   default-language:    Haskell2010
   build-depends:
       base        ^>=4.12.0.0
-    , lens        ^>=4.17.1
-    , linear      ^>=1.20.9
+    , raindrop
     , massiv      ^>=0.3.6.0
     , massiv-io   ^>=0.1.6.0
-    , microlens   ^>=0.4.11.2
-    , monad-loops ^>=0.4.3

@@ -19,14 +19,14 @@ import           Data.Massiv.Array                 (Array, Comp (Seq), Ix1,
                                                     makeArray, (!))
 import           Data.STRef                        (newSTRef, readSTRef,
                                                     writeSTRef)
-import           Debug.Trace                       (traceM)
 import           Linear                            (Epsilon, nearZero)
 
 import           Raindrop.Internal.Geom.Bezier2    (Bezier2 (Bezier2))
 import qualified Raindrop.Internal.Geom.Bezier2    as Bezier2
-import           Raindrop.Internal.Geom.Vec        (P, V, distance, normalize,
-                                                    p2v, qd, scalarCross, v2p,
-                                                    (*^), (^+^), (^-^), _x, _y, dot)
+import           Raindrop.Internal.Geom.Vec        (P, V, distance, dot,
+                                                    normalize, p2v, qd,
+                                                    scalarCross, v2p, (*^),
+                                                    (^+^), (^-^), _y)
 import           Raindrop.Internal.Interval        (clamp, mkClosedInterval)
 import           Raindrop.Internal.PolynomialRoots (filterMaybeThree,
                                                     solveCubic)
@@ -155,7 +155,7 @@ nrMin eps bez p tInit =
   let
 
     g t = tangent bez t `dot` p2v (eval bez t - p)
-    g' t = undefined
+    g' _t = undefined
 
   in
     runST $ do
