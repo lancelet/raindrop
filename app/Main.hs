@@ -97,7 +97,7 @@ capitalYSDF = Massiv.makeArray Seq (Sz (512 :. 512)) gen
 batSymbolSDF :: Image S Y Word8
 batSymbolSDF = Massiv.makeArray Seq (Sz (365 :. 581)) gen
   where
-    gen (j :. i) = PixelY . floor $ pathSDF batSymbol pt
+    gen (j :. i) = PixelY . floor $ 10 * pathSDF batSymbol pt
       where
         pt = mkP (fromIntegral i) (fromIntegral j)
 
@@ -105,7 +105,7 @@ batSymbolSDF = Massiv.makeArray Seq (Sz (365 :. 581)) gen
 batSymbolAAPath :: Image S Y Word8
 batSymbolAAPath = Massiv.makeArray Seq (Sz (365 :. 581)) gen
   where
-    gen (j :. i) = PixelY . floor $ 255 * aaPath 10 batSymbol pt
+    gen (j :. i) = PixelY . floor $ 255 * aaPath 20 batSymbol pt
       where
         pt = mkP (fromIntegral i) (fromIntegral j)
 

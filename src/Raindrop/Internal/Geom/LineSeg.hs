@@ -6,6 +6,7 @@ module Raindrop.Internal.Geom.LineSeg
   ( -- * Types
     LineSeg(LineSeg)
     -- * Functions
+  , eval
   , bound
   , windingNum
   , distanceTo
@@ -26,6 +27,12 @@ data LineSeg a
   = LineSeg
     !(P a)
     !(P a)
+
+
+-- | Evaluate a line segment as a parametric curve.
+eval :: (Num a) => LineSeg a -> a -> P a
+eval (LineSeg pa pb) t = (1-t)*^pa + t*^pb
+{-# INLINE eval #-}
 
 
 -- | Bounding box of a line segment.
@@ -71,3 +78,4 @@ distanceTo (LineSeg p1 p2) p =
     p' = p1 .+^ (t *^ s)
   in
     distanceA p p'
+{-# INLINE distanceTo #-}

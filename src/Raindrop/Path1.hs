@@ -54,7 +54,7 @@ pathToSDF (Path o (c:cs)) = s : pathToSDF (Path o' cs)
       CurveTo pb pc pd ->
         (SDFComponent
          { windingNum = Bezier3.windingNum (Bezier3 o pb pc pd)
-         , distanceTo = Bezier3.distanceTo 32 0.001 (Bezier3 o pb pc pd)
+         , distanceTo = Bezier3.distanceTo 32 0.01 0.01 (Bezier3 o pb pc pd)
          }, pd)
 
 
@@ -69,8 +69,8 @@ pathSDF path p = sdfSign * minimum ((`distanceTo` p) <$> pathToSDF path)
 
 
 smoothStep :: (Fractional a, Ord a) => a -> a -> a -> a
-smoothStep minVal maxVal x | x < minVal = 0
-                           | x > maxVal = 1
+smoothStep minVal maxVal x | x' <= 0.01 = 0
+                           | x' >= 0.99 = 1
                            | otherwise  = 6*x'^(5 :: Int)
                                           - 15*x'^(4 :: Int)
                                           + 10*x'^(3 :: Int)

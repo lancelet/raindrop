@@ -12,21 +12,22 @@ module Raindrop.Internal.Geom.Bezier3
   ) where
 
 import           Control.Lens                      ((^.))
-import           Control.Monad.Loops               (whileM_)
+import           Control.Monad.Loops               (untilM_)
 import           Control.Monad.ST                  (runST)
 import           Data.Massiv.Array                 (Array, Comp (Seq), Ix1,
                                                     Sz (Sz), U, Unbox, ifoldlS,
                                                     makeArray, (!))
 import           Data.STRef                        (newSTRef, readSTRef,
                                                     writeSTRef)
+import           Debug.Trace                       (traceM)
 import           Linear                            (Epsilon, nearZero)
 
 import           Raindrop.Internal.Geom.Bezier2    (Bezier2 (Bezier2))
 import qualified Raindrop.Internal.Geom.Bezier2    as Bezier2
-import           Raindrop.Internal.Geom.Vec        (P, V, distance, dot,
+import qualified Raindrop.Internal.Geom.LineSeg    as LineSeg
+import           Raindrop.Internal.Geom.Vec        (P, V, distance, dot, norm,
                                                     normalize, p2v, qd,
-                                                    scalarCross, v2p, (*^),
-                                                    (^+^), (^-^), _y)
+                                                    scalarCross, (*^), _y)
 import           Raindrop.Internal.Interval        (clamp, mkClosedInterval)
 import           Raindrop.Internal.PolynomialRoots (filterMaybeThree,
                                                     solveCubic)
@@ -43,32 +44,18 @@ data Bezier3 a
 eval :: (Num a) => Bezier3 a -> a -> P a
 eval (Bezier3 pa pb pc pd) t =
   let
-    va = p2v pa
-    vb = p2v pb
-    vc = p2v pc
-    vd = p2v pd
-
     t2  = t*t
     t3  = t2*t
     mt  = 1 - t
     mt2 = mt*mt
     mt3 = mt2*mt
   in
-    v2p $ mt3*^va ^+^ 3*mt2*t*^vb ^+^ 3*mt*t2*^vc ^+^ t3*^vd
+    mt3*^pa + 3*mt2*t*^pb + 3*mt*t2*^pc + t3*^pd
 {-# INLINE eval #-}
 
 
 deriv :: (Num a) => Bezier3 a -> Bezier2 a
-deriv (Bezier3 pa pb pc pd) = Bezier2 pa' pb' pc'
-  where
-    va = p2v pa
-    vb = p2v pb
-    vc = p2v pc
-    vd = p2v pd
-
-    pa' = v2p $ 3*^(vb ^-^ va)
-    pb' = v2p $ 3*^(vc ^-^ vb)
-    pc' = v2p $ 3*^(vd ^-^ vc)
+deriv (Bezier3 pa pb pc pd) = Bezier2 (3*(pb - pa)) (3*(pc - pb)) (3*(pd - pc))
 {-# INLINE deriv #-}
 
 
@@ -90,7 +77,6 @@ tangent b t = normalize $ p2v $ Bezier2.eval (deriv b) t
 windingNum :: (Ord a, RealFrac a, Floating a, Epsilon a) => Bezier3 a -> P a -> Int
 windingNum bez@(Bezier3 pa pb pc pd) p = sum $ fmap wn ts
   where
-    v  = p2v p
     y  = p^._y
     ya = pa^._y - y
     yb = pb^._y - y
@@ -107,8 +93,8 @@ windingNum bez@(Bezier3 pa pb pc pd) p = sum $ fmap wn ts
 
     wn t = if onLeft then 1 else -1
       where
-        onLeft = tangent bez t `scalarCross` (v ^-^ vx) > 0
-        vx = p2v $ eval bez t
+        onLeft = tangent bez t `scalarCross` p2v (p - px) > 0
+        px = eval bez t
 {-# INLINE windingNum #-}
 
 
@@ -122,8 +108,8 @@ minIndexBy cmp array = fst $ ifoldlS fn z array
 {-# INLINE minIndexBy #-}
 
 
-distanceTo :: forall a. (Show a, Unbox a, Floating a, Ord a, Epsilon a) => Int -> a -> Bezier3 a -> P a -> a
-distanceTo nTabulatedPoints err bez p =
+distanceTo :: forall a. (Show a, Unbox a, Floating a, Ord a, Epsilon a) => Int -> a -> a -> Bezier3 a -> P a -> a
+distanceTo nTabulatedPoints eps1 eps2 bez p =
   let
     ptTable :: Array U Ix1 (P a)
     ptTable = makeArray Seq (Sz nTabulatedPoints)
@@ -144,35 +130,67 @@ distanceTo nTabulatedPoints err bez p =
       initT = fromIntegral minIx / fromIntegral (nTabulatedPoints - 1)
 
       finalT :: a
-      finalT = clamp (mkClosedInterval 0 1) $ nrMin err bez p initT
+      finalT = clamp (mkClosedInterval 0 1) $ nrMin eps1 eps2 bez p initT
     in
       distance p (eval bez finalT)
 {-# INLINE distanceTo #-}
 
 
-nrMin :: (Floating a, Ord a, Show a, Epsilon a) => a -> Bezier3 a -> P a -> a -> a
-nrMin eps bez p tInit =
+{-
+eps1 = a measure of Euclidean distance
+eps2 = a zero cosine measure
+-}
+nrMin :: forall a. (Floating a, Ord a, Show a, Epsilon a) => a -> a -> Bezier3 a -> P a -> a -> a
+nrMin eps1 eps2 bez p tInit = runST $ do
+
+  let maxIterations = 100
+  nIterationsRef <- newSTRef 0
+
+  tRef <- newSTRef tInit
+  terminateRef <- newSTRef False
   let
 
-    g t = tangent bez t `dot` p2v (eval bez t - p)
-    g' _t = undefined
+    b2 = deriv bez
+    b1 = Bezier2.deriv b2
 
-  in
-    runST $ do
-      tRef  <- newSTRef tInit
-      gtRef <- newSTRef $ g tInit
-      let run = do
-            t <- readSTRef tRef
-            if t < 0 || t > 1
-              then pure False
-              else do
-                gt <- readSTRef gtRef
-                pure (abs gt >= eps)
-      whileM_ run $ do
-        t     <- readSTRef tRef
-        gPrev <- readSTRef gtRef
-        -- traceM $ "t = " <> show t
-        let t' = t - gPrev / g' t
-        writeSTRef tRef t'
-        writeSTRef gtRef $ g t'
-      readSTRef tRef
+    iteration = do
+      t <- readSTRef tRef
+      let
+        r   = eval bez t
+        r'  = Bezier2.eval b2 t
+        r'' = LineSeg.eval b1 t
+
+        pr = r - p
+        g  = r' `dot` pr
+        g' = (r'' `dot` pr) + (r' `dot` r')
+
+        t' = t - g / g'
+
+        ptCoincidence = norm pr <= eps1
+        zeroCosine = abs g / norm r' / norm pr <= eps2
+        noProgress = norm ((t' - t)*^r') <= eps1
+        outOfRange = t < 0 || t > 1
+
+        terminate = ptCoincidence || zeroCosine || noProgress || outOfRange
+
+      nIterations <- readSTRef nIterationsRef
+      if nIterations >= maxIterations
+        then error
+             $ "Maximum number of iterations exceeded! "
+             <> "ptCoincidence = " <> show ptCoincidence
+             <> ", zeroCosine = " <> show zeroCosine
+             <> ", noProgress = " <> show noProgress
+             <> ", pr = " <> show pr
+             <> ", g = " <> show g
+             <> ", g' = " <> show g'
+             <> ", t = " <> show t
+             <> ", t' = " <> show t'
+        else pure ()
+      writeSTRef nIterationsRef (nIterations + 1)
+
+      writeSTRef tRef t'
+      writeSTRef terminateRef terminate
+
+  untilM_ iteration (readSTRef terminateRef)
+  clamp (mkClosedInterval 0 1) <$> readSTRef tRef
+{-# INLINE nrMin #-}

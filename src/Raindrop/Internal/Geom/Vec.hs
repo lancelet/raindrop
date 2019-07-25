@@ -18,22 +18,21 @@ module Raindrop.Internal.Geom.Vec
   , distance
   , distanceA
   , quadrance
+  , norm
     -- * Lenses
   , _x
   , _y
     -- * Operators
-  , (.-.)
   , (*^)
-  , (^+^)
-  , (^-^)
   , (.+^)
+  , (.-.)
   ) where
 
 import           Control.Lens  ((^.))
-import           Linear        (distance, dot, normalize, qd, quadrance, (*^),
-                                (^+^), (^-^), _x, _y)
+import           Linear        (distance, dot, norm, normalize, qd, quadrance,
+                                (*^), _x, _y)
 import qualified Linear
-import           Linear.Affine ((.+^), (.-.), distanceA)
+import           Linear.Affine (distanceA, (.+^), (.-.))
 import qualified Linear.Affine
 
 type V a = Linear.V2 a
