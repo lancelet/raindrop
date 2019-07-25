@@ -4,7 +4,7 @@
     <path id="OuterEllipse" d="
       M 289,352
       C -56,352 -94,23 291,22
-      C 675,22 636,352 291,352
+      C 675,22 636,352 289,352
       Z" style="fill:black;stroke:none;stroke-width:0px;"/>
     <path id="InnerEllipse" d="
       M 290,335

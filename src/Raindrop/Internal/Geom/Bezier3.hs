@@ -19,7 +19,6 @@ import           Data.Massiv.Array                 (Array, Comp (Seq), Ix1,
                                                     makeArray, (!))
 import           Data.STRef                        (newSTRef, readSTRef,
                                                     writeSTRef)
-import           Debug.Trace                       (traceM)
 import           Linear                            (Epsilon, nearZero)
 
 import           Raindrop.Internal.Geom.Bezier2    (Bezier2 (Bezier2))
@@ -91,10 +90,13 @@ windingNum bez@(Bezier3 pa pb pc pd) p = sum $ fmap wn ts
     ts' = solveCubic nearZero a b c d
     ts = filterMaybeThree inBezierParamRange ts'
 
-    wn t = if onLeft then 1 else -1
+    wn t
+      | zeroTangent = 0
+      | otherwise   = if onLeft then 1 else -1
       where
         onLeft = tangent bez t `scalarCross` p2v (p - px) > 0
         px = eval bez t
+        zeroTangent = (abs (tangent bez t)^._y) <= 0.01
 {-# INLINE windingNum #-}
 
 
@@ -144,7 +146,7 @@ nrMin :: forall a. (Floating a, Ord a, Show a, Epsilon a) => a -> a -> Bezier3 a
 nrMin eps1 eps2 bez p tInit = runST $ do
 
   let maxIterations = 100
-  nIterationsRef <- newSTRef 0
+  nIterationsRef <- newSTRef (0 :: Int)
 
   tRef <- newSTRef tInit
   terminateRef <- newSTRef False

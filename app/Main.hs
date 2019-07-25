@@ -1,4 +1,5 @@
 {-# LANGUAGE NamedFieldPuns      #-}
+{-# LANGUAGE NegativeLiterals    #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 module Main where
 
@@ -7,12 +8,14 @@ import           Data.Massiv.Array          as Massiv
 import           Data.Massiv.Array.IO       (Image)
 import           Data.Massiv.Array.IO       as Massiv
 import           Data.Word                  (Word8)
+import qualified Graphics.ColorSpace.RGB    as RGB
 import           Graphics.ColorSpace.Y      (Pixel (PixelY), Y)
 
 import           Raindrop.Internal.Geom.Vec (mkP)
-import           Raindrop.Path1             (Path (Path),
+import           Raindrop.Path1             (Elem (FillPath, Flood),
+                                             Fill (SolidFill), Path (Path),
                                              PathCommand (CurveTo, LineTo),
-                                             inPath, pathSDF, aaPath)
+                                             aaPath, drawElems, inPath, pathSDF)
 
 capitalY :: Path Float
 capitalY
@@ -62,6 +65,31 @@ batSymbol
     ]
 
 
+batSignalElems :: [Elem Word8 Float]
+batSignalElems =
+  [ FillPath (SolidFill $ RGB.PixelRGBA 0 0 0 255) batSymbol
+  , FillPath (SolidFill $ RGB.PixelRGBA 255 198 6 255) innerBatEllipse
+  , FillPath (SolidFill $ RGB.PixelRGBA 0 0 0 255) outerBatEllipse
+  , Flood (SolidFill $ RGB.PixelRGBA 255 255 255 255)
+  ]
+
+
+innerBatEllipse :: Path Float
+innerBatEllipse
+  = Path (mkP 290 335)
+    [ CurveTo (mkP -30 335) (mkP -66 40) (mkP 290 40)
+    , CurveTo (mkP 647 40) (mkP 611 335) (mkP 290 335)
+    ]
+
+
+outerBatEllipse :: Path Float
+outerBatEllipse
+  = Path (mkP 289 352)
+    [ CurveTo (mkP -56 352) (mkP -94 23) (mkP 291 22)
+    , CurveTo (mkP 675 22) (mkP 636 352) (mkP 289 352)
+    ]
+
+
 inCapitalY :: Image S Y Word8
 inCapitalY = Massiv.makeArray Seq (Sz (512 :. 512)) gen
   where
@@ -105,7 +133,15 @@ batSymbolSDF = Massiv.makeArray Seq (Sz (365 :. 581)) gen
 batSymbolAAPath :: Image S Y Word8
 batSymbolAAPath = Massiv.makeArray Seq (Sz (365 :. 581)) gen
   where
-    gen (j :. i) = PixelY . floor $ 255 * aaPath 20 batSymbol pt
+    gen (j :. i) = PixelY . floor $ 255 * aaPath 1.44 batSymbol pt
+      where
+        pt = mkP (fromIntegral i) (fromIntegral j)
+
+
+batSignal :: Image S RGB.RGBA Word8
+batSignal = Massiv.makeArray Seq (Sz (365 :. 581)) gen
+  where
+    gen (j :. i) = drawElems 1.44 batSignalElems pt
       where
         pt = mkP (fromIntegral i) (fromIntegral j)
 
@@ -117,6 +153,7 @@ main = do
   Massiv.writeImage "test-in-bezier-thingo.png" inBezierThingo
   Massiv.writeImage "test-in-bat-symbol.png" inBatSymbol
   Massiv.writeImage "test-y-sdf.png" capitalYSDF
-  -}
   Massiv.writeImage "test-bat-symbol-sdf.png" batSymbolSDF
   Massiv.writeImage "test-bat-symbol-aa-path.png" batSymbolAAPath
+  -}
+  Massiv.writeImage "test-bat-signal.png" batSignal
