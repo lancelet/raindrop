@@ -139,11 +139,14 @@ batSymbolAAPath = Massiv.makeArray Seq (Sz (365 :. 581)) gen
 
 
 batSignal :: Image S RGB.RGBA Word8
-batSignal = Massiv.makeArray Seq (Sz (365 :. 581)) gen
-  where
-    gen (j :. i) = drawElems 1.44 batSignalElems pt
+batSignal =
+  let
+    f = drawElems 1.44 batSignalElems
+    gen (j :. i) = f pt
       where
         pt = mkP (fromIntegral i) (fromIntegral j)
+  in
+    Massiv.makeArray Seq (Sz (365 :. 581)) gen
 
 
 main :: IO ()

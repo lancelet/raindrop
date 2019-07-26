@@ -14,11 +14,10 @@ module Raindrop.Internal.Geom.Bezier3
 import           Control.Lens                      ((^.))
 import           Control.Monad.Loops               (untilM_)
 import           Control.Monad.ST                  (runST)
-import           Data.Massiv.Array                 (Array, Comp (Seq), Ix1,
-                                                    Sz (Sz), U, Unbox, ifoldlS,
-                                                    makeArray, (!))
 import           Data.STRef                        (newSTRef, readSTRef,
                                                     writeSTRef)
+import           Data.Vector.Unboxed               (Unbox)
+import qualified Data.Vector.Unboxed               as U
 import           Linear                            (Epsilon, nearZero)
 
 import           Raindrop.Internal.Geom.Bezier2    (Bezier2 (Bezier2))
@@ -100,21 +99,11 @@ windingNum bez@(Bezier3 pa pb pc pd) p = sum $ fmap wn ts
 {-# INLINE windingNum #-}
 
 
-minIndexBy :: (Unbox a) => (a -> a -> Ordering) -> Array U Ix1 a -> Ix1
-minIndexBy cmp array = fst $ ifoldlS fn z array
-  where
-    z = (0, array ! 0)
-    fn c@(_, currentMin) i val
-      | cmp val currentMin == LT = (i, val)
-      | otherwise                =  c
-{-# INLINE minIndexBy #-}
-
-
 distanceTo :: forall a. (Show a, Unbox a, Floating a, Ord a, Epsilon a) => Int -> a -> a -> Bezier3 a -> P a -> a
 distanceTo nTabulatedPoints eps1 eps2 bez p =
   let
-    ptTable :: Array U Ix1 (P a)
-    ptTable = makeArray Seq (Sz nTabulatedPoints)
+    ptTable :: U.Vector (P a)
+    ptTable = U.generate nTabulatedPoints
               $ \i ->
                   let
                     t = fromIntegral i / fromIntegral (nTabulatedPoints - 1)
@@ -125,8 +114,8 @@ distanceTo nTabulatedPoints eps1 eps2 bez p =
       cmpDistance :: P a -> P a -> Ordering
       cmpDistance p1 p2 = compare (qd p p1) (qd p p2)
 
-      minIx :: Ix1
-      minIx = minIndexBy cmpDistance ptTable
+      minIx :: Int
+      minIx = U.minIndexBy cmpDistance ptTable
 
       initT :: a
       initT = fromIntegral minIx / fromIntegral (nTabulatedPoints - 1)

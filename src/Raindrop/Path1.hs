@@ -55,18 +55,26 @@ pathToSDF (Path o (c:cs)) = s : pathToSDF (Path o' cs)
       CurveTo pb pc pd ->
         (SDFComponent
          { windingNum = Bezier3.windingNum (Bezier3 o pb pc pd)
-         , distanceTo = Bezier3.distanceTo 32 0.2 0.2 (Bezier3 o pb pc pd)
+         , distanceTo = Bezier3.distanceTo 8 0.2 0.2 (Bezier3 o pb pc pd)
          }, pd)
 
 
 inPath :: (Show a, Ord a, RealFrac a, Floating a, Unbox a, Epsilon a) => Path a -> P a -> Bool
-inPath path p = sum ((`windingNum` p) <$> pathToSDF path) /= 0
+inPath path p =
+  let
+    sdfComponents = pathToSDF path
+  in
+    sum ((`windingNum` p) <$> sdfComponents) /= 0
 
 
 pathSDF :: (Show a, Ord a, RealFrac a, Floating a, Unbox a, Epsilon a) => Path a -> P a -> a
-pathSDF path p = sdfSign * minimum ((`distanceTo` p) <$> pathToSDF path)
-  where
-    sdfSign = if inPath path p then -1 else 1
+pathSDF path p =
+  let
+    sdfComponents = pathToSDF path
+    ip = inPath path
+    sdfSign = if ip p then -1 else 1
+  in
+    sdfSign * minimum ((`distanceTo` p) <$> sdfComponents)
 
 
 smoothStep :: (Fractional a, Ord a) => a -> a -> a -> a
@@ -101,18 +109,51 @@ alphaOver (PixelRGBA ra' ga' ba' aa') (PixelRGBA rb' gb' bb' ab') = PixelRGBA r 
 
 
 aaPath :: (Show a, Ord a, RealFrac a, Floating a, Unbox a, Epsilon a) => a -> Path a -> P a -> a
-aaPath aaWidth path p = 1 - smoothStep (-a2) a2 (pathSDF path p)
-  where
+aaPath aaWidth path p =
+  let
+    psdf = pathSDF path
     a2 = aaWidth / 2
+  in
+    1 - smoothStep (-a2) a2 (psdf p)
 
 
 drawElem :: (Show a, Ord a, RealFrac a, Floating a, Unbox a, Epsilon a, Integral px) => a -> Elem px a -> P a -> Pixel RGBA px
 drawElem _ (Flood (SolidFill fill)) _ = fill
-drawElem aaWidth (FillPath (SolidFill (PixelRGBA r g b a)) path) p = PixelRGBA r g b a'
-  where
-    a' = floor $ fromIntegral a * aaPath aaWidth path p
+drawElem aaWidth (FillPath (SolidFill (PixelRGBA r g b a)) path) p =
+  let
+    aap = aaPath aaWidth path
+    a' = floor $ fromIntegral a * aap p
+  in
+    PixelRGBA r g b a'
 
+drawElems
+  :: forall px a.
+     ( Bounded px
+     , Num px
+     , Show a
+     , RealFrac a
+     , Floating a
+     , Unbox a
+     , Epsilon a
+     , Integral px )
+  => a
+  -> [Elem px a]
+  -> P a
+  -> Pixel RGBA px
+drawElems aaWidth elemList =
+  let
+    draws :: [P a -> Pixel RGBA px]
+    draws = drawElem aaWidth <$> elemList
 
+    drawElems' :: [P a -> Pixel RGBA px] -> P a -> Pixel RGBA px
+    drawElems' [] _ = PixelRGBA 0 0 0 0
+    drawElems' (e:es) p = if a == (maxBound :: px) then c else alphaOver c (drawElems' es p)
+      where
+        c@(PixelRGBA _ _ _ a) = e p
+  in
+    drawElems' draws
+
+{-
 drawElems :: forall px a. (Bounded px, Num px, Show a, RealFrac a, Floating a, Unbox a, Epsilon a, Integral px) => a -> [Elem px a] -> P a -> Pixel RGBA px
 drawElems _ [] _ = PixelRGBA 0 0 0 0
 drawElems aaWidth [e] p = drawElem aaWidth e p
@@ -120,3 +161,4 @@ drawElems aaWidth (e:es) p =
   if a == (maxBound :: px) then c else alphaOver c (drawElems aaWidth es p)
   where
     c@(PixelRGBA _ _ _ a) = drawElem aaWidth e p
+-}
