@@ -5,10 +5,9 @@ Description : Main entry point for tests.
 module Main where
 
 -- import qualified Test.DocTest  as DocTest
-import           Hedgehog             (Group, checkParallel)
+import           Hedgehog        (Group, checkParallel)
 
-import qualified AlphaStencil.SegTest as Seg (tests)
-import qualified Image.ImageTest      as Image (tests)
+import qualified Image.ImageTest as Image (tests)
 
 main :: IO ()
 main = do
@@ -24,7 +23,6 @@ runHedgehogTests = do
 hedgehogTests :: [Group]
 hedgehogTests =
   [ Image.tests
-  , Seg.tests
   ]
 
 runDocTests :: IO ()
