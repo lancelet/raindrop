@@ -33,7 +33,6 @@ test-suite test
   hs-source-dirs:   test
   main-is:          Test.hs
   other-modules:
-    AlphaStencil.SegTest
     Image.ImageTest
   build-depends:
       base
