@@ -16,7 +16,6 @@ library
     -Wincomplete-record-updates
     -Wmissing-import-lists
   exposed-modules:
-    DocAlphaStencil
   build-depends:
       base
     , colour              ^>=2.3.5

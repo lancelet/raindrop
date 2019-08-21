@@ -1,0 +1,41 @@
+module "raindrop-0.1.0.0-{{PACKAGE_HASH}}/AlphaStencil.Log" {
+  inside "mkRecordingLogger" {
+    tick "(error \"Logger: mismatch in number of events!\")" on line 108;
+  }
+  inside "logMessage" {
+    tick "pure ()" on line 80;
+  }
+  tick function "showsPrec" on line 72;
+  tick function "==";
+}
+module "raindrop-0.1.0.0-{{PACKAGE_HASH}}/AlphaStencil.Seg" {
+  tick "pdDxa" on line 98;
+  tick "pdDxb" on line 99;
+  tick "pdDyb" on line 100;
+  tick "pdDyc" on line 101;
+  tick "unIntercept" on line 59;
+  tick "unGradient" on line 55;
+  tick "unEpsilon" on line 48;
+  tick "pty" on line 36;
+  tick function "showsPrec";
+  tick function "==";
+}
+module "raindrop-0.1.0.0-{{PACKAGE_HASH}}/Image.Types" {
+  tick "unJ";
+  tick "unI";
+  tick "width";
+  tick "height";
+  tick function "==";
+  tick function "showsPrec";
+  tick function "compare";
+  tick function "+";
+  tick function "sizeOf";
+  tick function "toRational";
+  tick function "succ";
+  tick function "quot";
+}
+module "raindrop-0.1.0.0-{{PACKAGE_HASH}}/Image.Loop" {
+  inside "loop" {
+    tick "()";
+  }
+}

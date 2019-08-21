@@ -4,6 +4,9 @@ Raindrop
 
 .. image:: https://travis-ci.org/lancelet/raindrop.svg?branch=master
     :target: https://travis-ci.org/lancelet/raindrop
+.. image:: https://coveralls.io/repos/github/lancelet/raindrop/badge.svg?branch=master
+    :target: https://coveralls.io/github/lancelet/raindrop?branch=master
+
 
 Raindrop is a 2D renderer. It uses a signed-area scanline rasterization
 algorithm, similar to the algorithm used by `Pathfinder 3`_.

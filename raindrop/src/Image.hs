@@ -1,182 +1,115 @@
 {-|
 Module      : Image
-Description : Storable images for Eggshell.
+Description : Storable images.
 
-Eggshell requires alpha channel images. 'MImage's are mutable images used
-inside tight imperative loops, while 'Image's are immutable images returned
-generally as the result of high-level processing.
+Immutable images. Images are built on top of the "Data.Vector.Storable" module.
+They are 2D arrays that are indexed in row-major layout. Two different types of
+images are provided:
 
-NOTE: It would probably be better to use @massiv@ for this, but massiv does not
-      have unsafe (no bounds-checking) operations. We need these operations to
-      be extremely fast, so no bounds-checking is highly desirable.
+  * The immutable 'Image' type, found in this module, and
+  * The mutable 'Image.Mutable.MImage' type, which can be mutated in a
+    'Control.Monad.Primitive.PrimMonad'.
+
+NOTE: It would probably be better to use @massiv@ for images in general, but
+      @massiv@ does not seem to allow operations without bounds-checking.
 -}
 {-# LANGUAGE DerivingStrategies         #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 module Image
-  ( -- * Types
+  ( -- * Types (re-exports)
     Size(Size, width, height)
   , I(I, unI)
   , J(J, unJ)
-  , DirLimit(Up, Down, UpTo, DownTo)
   , Ix(Ix)
-  , Image
-  , MImage
+  , Image(size, rowMajor)
     -- * Functions
     -- ** Creation and Freezing
-  , newImage
-  , newMutable
+  , new
   , unsafeFreeze
-    -- ** Conversion to Vector
-  , rowMajor
-  , getSize
-  , getMSize
+    -- ** Checking ranges
+  , inRangeI
+  , inRangeJ
+    -- ** Getting and setting pixels
   , setPixel
   , getPixel
-    -- ** Looping and Mutation
-  , loopI
-  , loopJ
-  , unsafeModify
+  , lindex
   ) where
 
-import           Control.Monad.Primitive      (PrimMonad, PrimState)
-import           Data.Vector.Storable         (Vector)
-import qualified Data.Vector.Storable         as V
-import           Data.Vector.Storable.Mutable (MVector)
-import qualified Data.Vector.Storable.Mutable as M
-import           Foreign.Storable             (Storable)
+import           Control.Monad.Primitive (PrimMonad, PrimState)
+import           Data.Vector.Storable    (Vector)
+import qualified Data.Vector.Storable    as V
+import           Foreign.Storable        (Storable)
 
-import           Image.Loop                (loop)
+import qualified Image.Mutable           as M
+import           Image.Types             (I (I, unI), Ix (Ix), J (J, unJ),
+                                          Size (Size, height, width), inRangeI,
+                                          inRangeJ)
 
--- | Size of an image.
-data Size
-  = Size
-    { width  :: {-# UNPACK #-} !Int
-    , height :: {-# UNPACK #-} !Int
+-- | Image, with pixels of type 'a'.
+data Image a
+  = Image
+    { size     :: !Size
+    -- ^ Size of an image.
+    , rowMajor :: !(Vector a)
+    -- ^ Vector of image pixels / elements in row-major order.
     }
-  deriving stock (Eq, Show)
 
--- | Horizontal coordinate.
-newtype I = I { unI :: Int }
-  deriving stock (Eq, Ord, Show)
-  deriving newtype (Num, Storable, Real, Enum, Integral)
-
--- | Vertical coordinate.
-newtype J = J { unJ :: Int }
-  deriving stock (Eq, Ord, Show)
-  deriving newtype (Num, Storable, Real, Enum, Integral)
-
--- | Direction and limit of for loops over coordinates.
+-- | Set a pixel in an immutable image.
 --
--- Used with 'loopI' and 'loopJ' functions.
-data DirLimit a
-  = Up        -- ^ Count up through an index until the end.
-  | Down      -- ^ Count down through an index until the start.
-  | UpTo a    -- ^ Count up to this value inclusive.
-  | DownTo a  -- ^ Count down to this value inclusive.
-
--- | Loop monadically over an 'I' coordinate (horizontally in the image).
+-- This function is ludicrously inefficient, since it copies the entire image
+-- each time it is run. However, this can still be useful for documentation and
+-- testing purposes.
 --
--- The 'Size' parameter is not referenced in 'UpTo' or 'DownTo' cases.
-loopI
-  :: Monad m
-  => Size         -- ^ Overall size to use for bounds.
-  -> I            -- ^ Starting index value ('I' coordinate).
-  -> DirLimit I   -- ^ Direction and optional limiting value.
-  -> (I -> m ())  -- ^ Monadic action to perform for each 'I' value.
-  -> m ()         -- ^ Overall action.
-loopI (Size w _) start lim body = loop start while step body
-  where
-    (while, step) = case lim of
-      Up          -> ((< I w),   (+ 1))
-      Down        -> ((>= 0),    \i -> i - 1)
-      UpTo iLim   -> ((<= iLim), (+ 1))
-      DownTo iLim -> ((>= iLim), \i -> i - 1)
-
--- | Loop monadically over a 'J' coordinate (vertically in the image).
+-- Example:
 --
--- The 'Size' parameter is not references in 'UpTo' or 'DownTo' cases.
-loopJ
-  :: Monad m
-  => Size         -- ^ Overall size used for bounds.
-  -> J            -- ^ Starting index value ('J' coordinate).
-  -> DirLimit J   -- ^ Direction and optional limiting value.
-  -> (J -> m ())  -- ^ Monadic action to perform for each 'J' value.
-  -> m ()         -- ^ Overall action.
-loopJ (Size _ h) start lim body = loop start while step body
-  where
-    (while, step) = case lim of
-      Up          -> ((< J h),   (+ 1))
-      Down        -> ((>= 0),    \j -> j - 1)
-      UpTo jLim   -> ((<= jLim), (+ 1))
-      DownTo jLim -> ((>= jLim), \j -> j - 1)
-
--- | Pair of coordinates.
-data Ix = Ix {-# UNPACK #-} !I {-# UNPACK #-} !J
-  deriving stock Show
-
--- | Image.
-data Image a = Image Size (Vector a)
-
--- | Mutable image.
-data MImage s a = MImage Size (MVector s a)
-
--- | Get the size of an image.
-getSize :: Image a -> Size
-getSize (Image sz _) = sz
-
--- | Get the size of a mutable image.
-getMSize :: MImage s a -> Size
-getMSize (MImage sz _) = sz
-
--- | Return the image in row-major order.
-rowMajor :: Storable a => Image a -> Vector a
-rowMajor (Image _ vec) = vec
-
--- | Set pixel in an immutable image.
+-- >>> image = new (Size 3 2) (0 :: Int)
+-- >>> V.toList $ rowMajor $ setPixel image (Ix (I 1) (J 1)) 3
+-- [0,0,0,0,3,0]
 setPixel :: Storable a => Image a -> Ix -> a -> Image a
 setPixel (Image sz vec) ix value =
-  Image sz (vec V.// [(lindexUnsafe sz ix, value)])
+  Image sz (vec V.// [(lindex sz ix, value)])
 
 -- | Get a pixel from an immutable image.
-getPixel :: Storable a => Image a -> Ix -> a
-getPixel (Image sz vec) ix = vec V.! lindexUnsafe sz ix
-
-newImage
-  :: Storable a
-  => Size
-  -> a
-  -> Image a
-newImage sz@(Size w h) x = Image sz (V.replicate (w*h) x)
-
--- | Create a mutable image.
-newMutable
-  :: (PrimMonad m, Storable a)
-  => Size                        -- ^ Size of the image.
-  -> a                           -- ^ Value for all pixels.
-  -> m (MImage (PrimState m) a)  -- ^ Created image.
-newMutable sz@(Size w h) x = MImage sz <$> M.replicate (w*h) x
-
--- | Modify a single pixel of a mutable image.
 --
--- No bounds checks are performed.
-unsafeModify
-  :: (PrimMonad m, Storable a)
-  => MImage (PrimState m) a  -- ^ Mutable image.
-  -> (a -> a)                -- ^ Pure modification function.
-  -> Ix                      -- ^ Index.
-  -> m ()                    -- ^ Action.
-unsafeModify (MImage sz vec) modFn ix
-  = M.unsafeModify vec modFn (lindexUnsafe sz ix)
+-- Example:
+--
+-- >>> ix = Ix (I 1) (J 1)
+-- >>> image0 = new (Size 3 2) (0 :: Int)
+-- >>> image1 = setPixel image0 ix 42
+-- >>> getPixel image0 ix
+-- 0
+-- >>> getPixel image1 ix
+-- 42
+getPixel :: Storable a => Image a -> Ix -> a
+getPixel (Image sz vec) ix = vec V.! lindex sz ix
+
+-- | Create a new image.
+new
+  :: Storable a
+  => Size     -- ^ Size of the image.
+  -> a        -- ^ Element to fill all pixels of the image.
+  -> Image a  -- ^ Produced image.
+new sz@(Size w h) x = Image sz (V.replicate vecLen x)
+  where
+    vecLen :: Int
+    vecLen = fromIntegral (w*h)
 
 -- | Freeze a mutable image to an immutable one without copying.
 unsafeFreeze
   :: (PrimMonad m, Storable a)
-  => MImage (PrimState m) a  -- ^ Image to freeze.
-  -> m (Image a)             -- ^ Frozen image.
-unsafeFreeze (MImage sz vec) = Image sz <$> V.unsafeFreeze vec
+  => M.MImage (PrimState m) a  -- ^ Image to freeze.
+  -> m (Image a)               -- ^ Frozen image.
+unsafeFreeze mImage =
+  Image (M.size mImage) <$> V.unsafeFreeze (M.rowMajor mImage)
 
--- | Linear index into an image.
---
--- No bounds checks are performed.
-lindexUnsafe :: Size -> Ix -> Int
-lindexUnsafe (Size w _) (Ix (I i) (J j)) = i + j*w
+-- | Create a row-major linear index.
+lindex :: Size -> Ix -> Int
+lindex sz ix@(Ix i j)
+  | inRange = M.lindexUnsafe sz ix
+  | otherwise = error
+                $ "Index is out of range: "
+                <> show ix
+                <> ". Image size: "
+                <> show sz
+  where
+    inRange = inRangeI sz i && inRangeJ sz j

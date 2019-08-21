@@ -2,6 +2,7 @@
 Module      : AlphaStencil.Render
 Description : Rendering alpha mask.
 -}
+{-# LANGUAGE FlexibleContexts #-}
 module AlphaStencil.Render
   ( -- * Functions
     renderSegs
@@ -14,71 +15,79 @@ import           Data.Foldable           (traverse_)
 import           Data.Vector             (Vector)
 import           Foreign.Storable        (Storable)
 
-import           AlphaStencil.Log        (Event (EventAddToPixel, EventPixelAreaDivision, EventPixelLineClip, EventPixelProjectX, EventStartSeg),
-                                          Logger, mkLogger, noOpLogger)
+import           AlphaStencil.Log        (Event (EClipSegToColumn, ENewImage,
+                                                 EProjArea, EPxAdd, EPxDivision,
+                                                 EStartSeg),
+                                          Logger (NoOp, Record), logMessage,
+                                          mkRecordingLogger, retrieveLog)
 import           AlphaStencil.Seg        (Epsilon, Seg, clip, pixelXRange,
                                           pixelYRange, projXArea, pxDivision,
-                                          pxDivisionArea, pxDivisionArea)
-import           Image                   (DirLimit (Down, DownTo, UpTo), Image,
-                                          Ix (Ix), MImage, Size, getMSize,
-                                          loopI, loopJ, newMutable,
-                                          unsafeFreeze, unsafeModify)
-
+                                          pxDivisionArea, segSign, unClipSeg)
+import           Image                   (Image, Ix (Ix), Size, unsafeFreeze)
+import           Image.Loop              (dec, inc, loop)
+import           Image.Mutable           (MImage)
+import qualified Image.Mutable           as M
 
 renderSegs
   :: ( Foldable t
-     , RealFrac a, Storable a )
+     , RealFrac a, Storable a, Show a )
   => Epsilon a
   -> Size
   -> t (Seg a)
   -> Image a
 renderSegs eps sz segs = runST $ do
-  mimg <- newMutable sz 0
-  traverse_ (renderSeg noOpLogger eps mimg) segs
-  unsafeFreeze mimg
+  mImg <- M.new sz 0
+  traverse_ (renderSeg NoOp eps mImg) segs
+  unsafeFreeze mImg
 
 logRenderSegs
   :: ( Foldable t
-     , RealFrac a, Storable a )
+     , RealFrac a, Storable a, Show a )
   => Epsilon a
   -> Size
   -> t (Seg a)
   -> (Image a, Vector (Event a))
 logRenderSegs eps sz segs = runST $ do
-  mimg <- newMutable sz 0
-  (logEvent, retrieveLog) <- mkLogger
-  traverse_ (renderSeg logEvent eps mimg) segs
-  img <- unsafeFreeze mimg
-  eventVector <- retrieveLog
-  pure (img, eventVector)
+  recordingLogger <- mkRecordingLogger
+  let logger = Record recordingLogger
+  mImg <- M.new sz 0
+  logMessage logger $ ENewImage sz
+  traverse_ (renderSeg logger eps mImg) segs
+  logEvents <- retrieveLog recordingLogger
+  image <- unsafeFreeze mImg
+  pure (image, logEvents)
 
 renderSeg
   :: ( PrimMonad m
-     , RealFrac a, Storable a )
-  => Logger m a
+     , RealFrac a, Storable a, Show a )
+  => Logger (Event a) m
   -> Epsilon a
   -> MImage (PrimState m) a
   -> Seg a
   -> m ()
-renderSeg logEvent eps mimg seg = do
-  logEvent (EventStartSeg seg)
+renderSeg logger eps mImg seg = do
+  logMessage logger $ EStartSeg seg
   let
-    sz = getMSize mimg
     (minI, maxI) = pixelXRange eps seg
-  loopI sz minI (UpTo maxI) $ \i -> do
+  loop minI (<= maxI) inc $ \i -> do
     let
       clipSeg = clip i seg
       (minJ, maxJ) = pixelYRange eps clipSeg
-    logEvent (EventPixelLineClip clipSeg)
-    loopJ sz maxJ (DownTo minJ) $ \j -> do
+    logMessage logger $ EClipSegToColumn i clipSeg
+    loop maxJ (>= minJ) dec $ \j -> do
       let
+        ix = Ix i j
         divs = pxDivision clipSeg j
-        area = pxDivisionArea clipSeg divs
-      logEvent (EventPixelAreaDivision (Ix i j) clipSeg divs)
-      unsafeModify mimg (+ area) (Ix i j)
-      logEvent (EventAddToPixel (Ix i j) area)
-    let projArea = projXArea clipSeg
-    loopJ sz (minJ - 1) Down $ \j -> do
-      unsafeModify mimg (+ projArea) (Ix i j)
-      logEvent (EventPixelProjectX (Ix i j) clipSeg)
-      logEvent (EventAddToPixel (Ix i j) projArea)
+        sign = segSign . unClipSeg $ clipSeg
+        area = pxDivisionArea sign divs
+      M.unsafeModify mImg (+ area) ix
+      logMessage logger $ EPxDivision ix divs
+      logMessage logger $ EPxAdd ix area
+    let
+      projArea = projXArea clipSeg
+    logMessage logger $ EProjArea i projArea
+    loop (minJ - 1) (>= 0) dec $ \j -> do
+      let
+        ix = Ix i j
+      M.unsafeModify mImg (+ projArea) ix
+      logMessage logger $ EPxAdd ix projArea

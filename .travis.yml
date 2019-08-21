@@ -8,6 +8,9 @@ dist: xenial
 # Do not choose a language; we provide our own build tools.
 language: generic
 
+env:
+  - GHCVER=8.6.5 STACK_YAML="$(pwd)/stack.yaml"
+
 # Caching so the next build will be fast too.
 cache:
   directories:
@@ -28,12 +31,19 @@ jobs:
         apt:
           packages:
             - libgmp-dev
-      script: stack --no-terminal install diagrams-core JuicyPixels lens
+      script:
+        - stack --no-terminal install diagrams-core JuicyPixels lens
+        - stack --no-terminal install stack-hpc-coveralls
     - stage: build
       name: "Build raindrop library"
+      before_script:
+        - stack --no-terminal install stack-hpc-coveralls
       script:
-      - stack --no-terminal --install-ghc test --only-dependencies
-      - stack --no-terminal test --haddock --no-haddock-deps
+        - stack --no-terminal --install-ghc test --only-dependencies
+        - stack --no-terminal test --haddock --no-haddock-deps --coverage
+        - ./raindrop/coverage-build.sh
+      after_script:
+        - shc combined custom
 
 stages:
   - bigdeps

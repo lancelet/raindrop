@@ -4,10 +4,16 @@ Description : Main entry point for tests.
 -}
 module Main where
 
--- import qualified Test.DocTest  as DocTest
-import           Hedgehog        (Group, checkParallel)
+import           Hedgehog                (Group, checkParallel)
+import qualified Test.DocTest            as DocTest
 
-import qualified Image.ImageTest as Image (tests)
+import qualified AlphaStencil.LogTest    as AlphaStencil.Log (tests)
+import qualified AlphaStencil.RenderTest as AlphaStencil.Render (tests)
+import qualified AlphaStencil.SegTest    as AlphaStencil.Seg (tests)
+import qualified Image.LoopTest          as Image.Loop (tests)
+import qualified Image.MutableTest       as Image.Mutable (tests)
+import qualified Image.TypesTest         as Image.Types (tests)
+import qualified ImageTest               as Image (tests)
 
 main :: IO ()
 main = do
@@ -22,7 +28,13 @@ runHedgehogTests = do
 
 hedgehogTests :: [Group]
 hedgehogTests =
-  [ Image.tests
+  [ AlphaStencil.Log.tests
+  , AlphaStencil.Render.tests
+  , AlphaStencil.Seg.tests
+  , Image.tests
+  , Image.Loop.tests
+  , Image.Mutable.tests
+  , Image.Types.tests
   ]
 
 runDocTests :: IO ()
@@ -32,10 +44,14 @@ runDocTests = do
   putStrLn "---- Finished DocTests ----"
 
 docTests :: IO ()
-docTests = pure ()
-  {-
+docTests =
   DocTest.doctest
   [ "-isrc"
-  , "src/Eggshell.hs"
+  , "src/AlphaStencil/Log.hs"
+  , "src/AlphaStencil/Render.hs"
+  , "src/AlphaStencil/Seg.hs"
+  , "src/Image.hs"
+  , "src/Image/Loop.hs"
+  , "src/Image/Mutable.hs"
+  , "src/Image/Types.hs"
   ]
-  -}

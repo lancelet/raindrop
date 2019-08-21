@@ -18,7 +18,9 @@ import           AlphaStencil.Seg    (Epsilon (Epsilon), P (P), Seg, seg)
 import           Image               (Image, Size (Size), rowMajor)
 
 main :: IO ()
-main = renderHashSymbol
+main = do
+  renderHashSymbol
+  renderTri
 
 renderHashSymbol :: IO ()
 renderHashSymbol = do
@@ -34,8 +36,22 @@ renderHashSymbol = do
   mapM_ (putStrLn . show) (V.toList events)
   JP.savePngImage "hash-symbol.png" dynImg
 
+renderTri :: IO ()
+renderTri = do
+  let
+    (img, events) = renderPath (Size 4 4) (Epsilon 1e-5) tri
+
+    jpImg :: JP.Image JP.PixelF
+    jpImg = flipVertically $ JP.Image 4 4 (rowMajor img)
+
+    dynImg :: JP.DynamicImage
+    dynImg = JP.ImageYF jpImg
+
+  mapM_ (putStrLn . show) (V.toList events)
+  JP.savePngImage "tri.png" dynImg
+
 renderPath
-  :: (RealFrac a, Fractional a, Ord a, Storable a)
+  :: (RealFrac a, Fractional a, Ord a, Storable a, Show a)
   => Size
   -> Epsilon a
   -> Path a
@@ -58,6 +74,16 @@ loopToSegs eps (Loop (pf:ps)) = catMaybes (followTrail pf (pf:ps))
     followTrail firstPt [p] = [seg eps p firstPt]
     followTrail firstPt (p : q : ss) =
       seg eps p q : followTrail firstPt (q : ss)
+
+tri :: Path Float
+tri =
+  Path
+  [ Loop
+    [ P 1.0 1.0
+    , P 3.0 0.5
+    , P 2.5 3.0
+    ]
+  ]
 
 hashSymbol :: Path Float
 hashSymbol =

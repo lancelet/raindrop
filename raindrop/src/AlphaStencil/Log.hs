@@ -1,59 +1,123 @@
 {-|
 Module      : AlphaStencil.Log
-Description : Log primitive drawing calculations.
+Description : Logging for primitive drawing operations.
+
+Primitive drawing operations in the alpha stencil code can be logged. This is
+useful for both debugging and visualisation purposes, because the alpha stencil
+code is purely procedural in nature.
+
+Logging is disabled by passing the `NoOp` constructor to the `logMessage`
+function. This is the typical use-case and is intended for zero overhead.
+
+To record logging events, the 'Record' logger value is created inside a
+'PrimMonad' instance using the 'mkRecordingLogger' function. Messages are then
+sent to it during the course of 'PrimMonad' execution. Finally, after operations
+have been completed, messages can be retrieved.
+
+An example in the 'Control.Monad.ST.ST' monad:
+
+>>> import Control.Monad.ST (runST)
+>>> :{
+  runST $ do
+    recordingLogger <- mkRecordingLogger
+    let logger = Record recordingLogger
+    logMessage logger "Hello"
+    logMessage logger "World"
+    retrieveLog recordingLogger
+:}
+["Hello","World"]
 -}
 {-# LANGUAGE DerivingStrategies  #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 module AlphaStencil.Log
   ( -- * Types
-    Logger
-  , Event(EventPixelLineClip, EventPixelAreaDivision,
-          EventPixelProjectX, EventAddToPixel, EventStartSeg)
+    Event(ENewImage, EStartSeg, EClipSegToColumn, EPxDivision, EPxAdd,
+          EProjArea)
+  , Logger(NoOp, Record)
+  , RecordingLogger
     -- * Functions
-  , noOpLogger
-  , mkLogger
+  , logMessage
+  , mkRecordingLogger
+  , retrieveLog
   ) where
 
-import           Control.Monad.Primitive (PrimMonad, PrimState)
-import           Data.Mutable            (DLList, asDLList, asSRef, modifyRef,
-                                          newColl, newRef, popFront, pushBack,
-                                          readRef)
+import           Control.Monad.Primitive (PrimMonad)
+import           Data.Maybe              (fromMaybe)
+import           Data.Mutable            (asDLList, asSRef, modifyRef, newColl,
+                                          newRef, popFront, pushBack, readRef,
+                                          writeRef)
 import           Data.Vector             (Vector)
 import qualified Data.Vector             as V
 
 import           AlphaStencil.Seg        (ClipSeg, PxDivision, Seg)
-import           Image                   (Ix)
+import           Image                   (I, Ix, Size)
 
-type Logger m a = Event a -> m ()
+-- | Events produced during primitive drawing operations.
+data Event a
+  = ENewImage !Size
+    -- ^ Image has been created. This event is produced at the start of
+    --   rendering and indicates the size of the alpha stencil image that is
+    --   about to be rendered.
+  | EStartSeg !(Seg a)
+    -- ^ Processing a segment has started.
+  | EClipSegToColumn !I !(ClipSeg a)
+    -- ^ A segment has been clipped to a column of pixels in the image.
+  | EPxDivision !Ix !(PxDivision a)
+    -- ^ Area sub-divisions of a pixel have been computed.
+  | EPxAdd !Ix !a
+    -- ^ A value has been added to a pixel.
+  | EProjArea !I !a
+    -- ^ A projected area has been computed for a column of pixels below the
+    --   line segment.
+  deriving stock (Eq, Show)
 
-noOpLogger :: Applicative m => Logger m a
-noOpLogger = const (pure ())
+-- | Log a message.
+logMessage
+  :: Applicative m
+  => Logger msg m  -- ^ Logger to use.
+  -> msg           -- ^ Message to log.
+  -> m ()
+logMessage NoOp _              = pure ()
+logMessage (Record rl) message = rlLogger rl message
 
-mkLogger :: forall m a. (PrimMonad m) => m (Logger m a, m (Vector (Event a)))
-mkLogger = do
-  counter <- asSRef <$> newRef (0 :: Int)
-  collection <- asDLList <$> newColl :: m (DLList (PrimState m) (Event a))
+-- | Type of logger.
+data Logger msg m
+  = NoOp
+    -- ^ A no-op logger which does nothing.
+  | Record !(RecordingLogger msg m)
+    -- ^ A logger which records events.
+
+-- | A recording logger.
+data RecordingLogger msg m
+  = RecordingLogger
+    { rlLogger      :: msg -> m ()
+    , rlRetrieveLog :: m (Vector msg)
+    }
+
+-- | Create a recording logger.
+mkRecordingLogger
+  :: forall m msg.
+     PrimMonad m
+  => m (RecordingLogger msg m)
+mkRecordingLogger = do
+  countRef <- asSRef <$> newRef (0 :: Int)
+  coll     <- asDLList <$> newColl
+
   let
     fromJust :: Maybe t -> t
-    fromJust (Just x) = x
-    fromJust Nothing  = error "mkLogger: wrong number of log events!"
+    fromJust = fromMaybe (error "Logger: mismatch in number of events!")
 
-    logEvent :: Event a -> m ()
-    logEvent event = do
-      modifyRef counter (+ 1)
-      pushBack collection event
+    logAction :: msg -> m ()
+    logAction msg = modifyRef countRef (+ 1) >> pushBack coll msg
 
-    retrieveLog :: m (Vector (Event a))
-    retrieveLog = do
-      count <- readRef counter
-      V.replicateM count (fromJust <$> popFront collection)
+    retrLog :: m (Vector msg)
+    retrLog = do
+      count <- readRef countRef
+      writeRef countRef 0
+      V.replicateM count (fromJust <$> popFront coll)
 
-  pure (logEvent, retrieveLog)
+  pure $ RecordingLogger logAction retrLog
 
-data Event a
-  = EventStartSeg !(Seg a)
-  | EventPixelLineClip !(ClipSeg a)
-  | EventPixelAreaDivision !Ix !(ClipSeg a) !(PxDivision a)
-  | EventPixelProjectX !Ix !(ClipSeg a)
-  | EventAddToPixel !Ix !a
-  deriving stock (Show)
+-- | Retrieve events from a recording logger.
+retrieveLog :: RecordingLogger msg m -> m (Vector msg)
+retrieveLog = rlRetrieveLog
