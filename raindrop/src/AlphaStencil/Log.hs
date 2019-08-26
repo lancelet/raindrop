@@ -60,7 +60,7 @@ data Event a
     --   about to be rendered.
   | EStartSeg !(Seg a)
     -- ^ Processing a segment has started.
-  | EClipSegToColumn !I !(ClipSeg a)
+  | EClipSegToColumn !I !(Seg a) !(ClipSeg a)
     -- ^ A segment has been clipped to a column of pixels in the image.
   | EPxDivision !Ix !(PxDivision a)
     -- ^ Area sub-divisions of a pixel have been computed.

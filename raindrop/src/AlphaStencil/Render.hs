@@ -73,15 +73,15 @@ renderSeg logger eps mImg seg = do
     let
       clipSeg = clip i seg
       (minJ, maxJ) = pixelYRange eps clipSeg
-    logMessage logger $ EClipSegToColumn i clipSeg
+    logMessage logger $ EClipSegToColumn i seg clipSeg
     loop maxJ (>= minJ) dec $ \j -> do
       let
         ix = Ix i j
         divs = pxDivision clipSeg j
         sign = segSign . unClipSeg $ clipSeg
         area = pxDivisionArea sign divs
-      M.unsafeModify mImg (+ area) ix
       logMessage logger $ EPxDivision ix divs
+      M.unsafeModify mImg (+ area) ix
       logMessage logger $ EPxAdd ix area
     let
       projArea = projXArea clipSeg

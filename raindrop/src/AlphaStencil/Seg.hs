@@ -35,7 +35,7 @@ data P a
     { ptx :: !a  -- ^ x-coordinate.
     , pty :: !a  -- ^ y-coordinate.
     }
-  deriving stock (Eq, Show)
+  deriving stock (Eq, Ord, Show)
 
 -- | A "small value".
 --
@@ -49,19 +49,19 @@ newtype Epsilon a = Epsilon { unEpsilon :: a }
 
 -- | Sign of a line segment's contribution to a pixel.
 data Sign = Plus | Minus
-  deriving stock (Eq, Show)
+  deriving stock (Eq, Ord, Show)
 
 -- | Gradient of a line segment.
 newtype Gradient a = Gradient { unGradient :: a }
-  deriving stock (Eq, Show)
+  deriving stock (Eq, Ord, Show)
 
 -- | y-axis intercept of a line segment.
 newtype Intercept a = Intercept { unIntercept :: a }
-  deriving stock (Eq, Show)
+  deriving stock (Eq, Ord, Show)
 
 -- | Polynomial representation of a line segment.
 data Poly a = Poly !(Gradient a) !(Intercept a)
-  deriving stock (Eq, Show)
+  deriving stock (Eq, Ord, Show)
 
 -- | Line segment.
 --
@@ -78,7 +78,7 @@ data Seg a
     , segPoly :: !(Poly a)
       -- ^ Polynomial representation of the line segment.
     }
-  deriving stock (Eq, Show)
+  deriving stock (Eq, Ord, Show)
 
 -- | Clipped line segment.
 --

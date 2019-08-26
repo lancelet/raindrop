@@ -53,6 +53,7 @@ data Image a
     , rowMajor :: !(Vector a)
     -- ^ Vector of image pixels / elements in row-major order.
     }
+  deriving stock (Eq, Show)
 
 -- | Set a pixel in an immutable image.
 --
