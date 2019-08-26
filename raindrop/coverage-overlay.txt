@@ -19,6 +19,16 @@ module "raindrop-0.1.0.0-{{PACKAGE_HASH}}/AlphaStencil.Seg" {
   tick "pty" on line 36;
   tick function "showsPrec";
   tick function "==";
+  tick function "compare";
+}
+module "raindrop-0.1.0.0-{{PACKAGE_HASH}}/Image" {
+  tick function "==";
+  tick function "showsPrec";
+}
+module "raindrop-0.1.0.0-{{PACKAGE_HASH}}/Image.Loop" {
+  inside "loop" {
+    tick "()";
+  }
 }
 module "raindrop-0.1.0.0-{{PACKAGE_HASH}}/Image.Types" {
   tick "unJ";
@@ -33,9 +43,4 @@ module "raindrop-0.1.0.0-{{PACKAGE_HASH}}/Image.Types" {
   tick function "toRational";
   tick function "succ";
   tick function "quot";
-}
-module "raindrop-0.1.0.0-{{PACKAGE_HASH}}/Image.Loop" {
-  inside "loop" {
-    tick "()";
-  }
 }
