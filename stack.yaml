@@ -1,7 +1,7 @@
 resolver: lts-14.0
 packages:
   - raindrop
-  - docimage
+  - raindrop-storyboard
 extra-deps:
   - github: lancelet/stack-hpc-coveralls
     commit: a5955d9e5b51ae1be690c3c588d53ea74a102cf6

@@ -85,7 +85,7 @@ renderSeg logger eps mImg seg = do
       logMessage logger $ EPxAdd ix area
     let
       projArea = projXArea clipSeg
-    logMessage logger $ EProjArea i projArea
+    logMessage logger $ EProjArea i (minJ - 1) projArea
     loop (minJ - 1) (>= 0) dec $ \j -> do
       let
         ix = Ix i j

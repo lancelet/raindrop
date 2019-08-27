@@ -50,7 +50,7 @@ import           Data.Vector             (Vector)
 import qualified Data.Vector             as V
 
 import           AlphaStencil.Seg        (ClipSeg, PxDivision, Seg)
-import           Image                   (I, Ix, Size)
+import           Image                   (I, J, Ix, Size)
 
 -- | Events produced during primitive drawing operations.
 data Event a
@@ -66,7 +66,7 @@ data Event a
     -- ^ Area sub-divisions of a pixel have been computed.
   | EPxAdd !Ix !a
     -- ^ A value has been added to a pixel.
-  | EProjArea !I !a
+  | EProjArea !I !J !a
     -- ^ A projected area has been computed for a column of pixels below the
     --   line segment.
   deriving stock (Eq, Show)
