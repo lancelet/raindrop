@@ -16,6 +16,7 @@ library
     -Wincomplete-record-updates
     -Wmissing-import-lists
   exposed-modules:
+    AlphaStencil
     AlphaStencil.Log
     AlphaStencil.Render
     AlphaStencil.Seg
