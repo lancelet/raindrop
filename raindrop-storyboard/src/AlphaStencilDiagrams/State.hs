@@ -2,16 +2,41 @@
 Module      : AlphaStencilDiagrams.State
 Description : Interpreting AlphaStencil events into a renderable state.
 -}
-{-# LANGUAGE DerivingStrategies #-}
-module AlphaStencilDiagrams.State where
+{-# LANGUAGE DerivingStrategies  #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+module AlphaStencilDiagrams.State
+  ( -- * Types
+    RenderStep (rsState, rsAnimAction)
+  , RenderState (rsImage, rsSeg, rsClipSeg, rsPxDivision, rsPxSet,
+                rsProjArea)
+  , AnimAction (OutputFrame, SkipToNext)
+    -- * Functions
+  , interpretEvents
+  ) where
 
 import           Foreign.Storable (Storable)
 
 import           AlphaStencil     (Seg)
 import qualified AlphaStencil.Log as Log
 import           AlphaStencil.Seg (ClipSeg, PxDivision)
+import           Data.Vector      (Vector)
+import qualified Data.Vector      as V
 import           Image            (I, Image, Ix, J)
-import qualified Image            as Image
+import qualified Image
+
+data RenderStep a
+  = RenderStep
+    { rsState      :: RenderState a
+    , rsAnimAction :: AnimAction
+    }
+  deriving stock Show
+
+defaultRenderStep :: RenderStep a
+defaultRenderStep =
+  RenderStep
+  { rsState      = defaultRenderState
+  , rsAnimAction = SkipToNext
+  }
 
 data RenderState a
   = RenderState
@@ -27,6 +52,7 @@ data RenderState a
 data AnimAction
   = OutputFrame
   | SkipToNext
+  deriving stock Show
 
 defaultRenderState :: RenderState a
 defaultRenderState =
@@ -43,20 +69,41 @@ interpretEvent
   :: (Num a, Storable a)
   => Log.Event a
   -> RenderState a
-  -> (RenderState a, AnimAction)
+  -> RenderStep a
 interpretEvent event s = case event of
   Log.ENewImage sz ->
-    ( defaultRenderState { rsImage = Just $ Image.new sz 0 }, SkipToNext )
+    RenderStep
+    defaultRenderState { rsImage = Just $ Image.new sz 0 }
+    SkipToNext
   Log.EStartSeg segm ->
-    ( defaultRenderState
-      { rsImage = rsImage s
-      , rsSeg   = Just segm }
-    , OutputFrame )
+    RenderStep
+    defaultRenderState
+    { rsImage = rsImage s
+    , rsSeg   = Just segm }
+    OutputFrame
   Log.EClipSegToColumn i _ clipSeg ->
-    ( s { rsClipSeg = Just (i, clipSeg) }, OutputFrame )
+    RenderStep
+    s { rsClipSeg = Just (i, clipSeg) }
+    OutputFrame
   Log.EPxDivision i pxDivision ->
-    ( s { rsPxDivision = Just (i, pxDivision) }, OutputFrame )
+    RenderStep
+    s { rsPxDivision = Just (i, pxDivision) }
+    OutputFrame
   Log.EPxAdd ix value ->
-    ( s { rsPxSet = Just (ix, value) }, OutputFrame )
+    RenderStep
+    s { rsPxSet = Just (ix, value) }
+    OutputFrame
   Log.EProjArea i jMax value ->
-    ( s { rsProjArea = Just (i, jMax, value) }, OutputFrame )
+    RenderStep
+    s { rsProjArea = Just (i, jMax, value) }
+    OutputFrame
+
+interpretEvents
+  :: forall a.
+     (Num a, Storable a)
+  => Vector (Log.Event a)
+  -> Vector (RenderStep a)
+interpretEvents = V.prescanl' f defaultRenderStep
+  where
+    f :: RenderStep a -> Log.Event a -> RenderStep a
+    f (RenderStep state _) event = interpretEvent event state
