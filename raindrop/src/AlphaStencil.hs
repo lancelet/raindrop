@@ -2,7 +2,14 @@
 -}
 module AlphaStencil
   ( -- * Types
-    Seg
+    P(P)
+  , Seg
+  , Epsilon(Epsilon)
+    -- * Functions
+  , seg
+  , renderSegs
+  , logRenderSegs
   ) where
 
-import AlphaStencil.Seg (Seg)
+import           AlphaStencil.Render (logRenderSegs, renderSegs)
+import           AlphaStencil.Seg    (Epsilon (Epsilon), P (P), Seg, seg)
