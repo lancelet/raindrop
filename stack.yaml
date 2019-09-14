@@ -1,7 +1,11 @@
-resolver: lts-14.3
+resolver: lts-14.5
 packages:
   - raindrop
   - raindrop-storyboard
 extra-deps:
   - github: lancelet/stack-hpc-coveralls
     commit: a5955d9e5b51ae1be690c3c588d53ea74a102cf6
+  - optics-0.1@sha256:f15690905f4500bd57ee8399fc36200e62360aeed974de9032a93841cc820b06,5851
+  - optics-th-0.1@sha256:c9d47fdf384a2c515ad6faeea9d5da99ac4a3d351ccec3a28f100e040d65bcd4,1913
+  - optics-core-0.1@sha256:301a7ec522495868a8969a6ad74913c569a1492ba455e5f3c6fcc65f16f500ca,4402
+  - optics-extra-0.1@sha256:87c94fa6c2265c26b55c20654dcb6917f7aac04b1d7df473997eb221c8bcc80e,3265

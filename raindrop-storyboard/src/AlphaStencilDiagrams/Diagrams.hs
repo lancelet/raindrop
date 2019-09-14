@@ -3,6 +3,7 @@ Module      : AlphaStencilDiagrams.Diagrams
 Description : Diagrams for AlphaStencil state.
 -}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE TemplateHaskell  #-}
 {-# LANGUAGE TypeFamilies     #-}
 module AlphaStencilDiagrams.Diagrams where
 
@@ -19,17 +20,34 @@ import           AlphaStencilDiagrams.State (AnimAction (OutputFrame, SkipToNext
                                              rsAnimAction, rsImage, rsState)
 import           Image                      (Size (Size))
 import qualified Image
+import           Optics                     ((^.))
+import qualified Optics.TH
+
+---- Styles -------------------------------------------------------------------
+
+-- | Style for a pixel grid.
+data GridStyle
+  = GridStyle
+    { _borderLineOutputWidth :: Float
+    , _borderLineColor       :: Colour Double
+    , _gridLineOutputWidth   :: Float
+    , _gridLineColor         :: Colour Double
+    }
+Optics.TH.makeLenses ''GridStyle
 
 data Style
   = Style
-    { styGrid :: GridStyle
+    { _gridStyle :: GridStyle
     }
+Optics.TH.makeLenses ''Style
 
 defaultStyle :: Style
 defaultStyle
   = Style
-    { styGrid = defaultGridStyle
+    { _gridStyle = defaultGridStyle
     }
+
+---- Rendering Functions ------------------------------------------------------
 
 renderMultipleSteps
   :: ( InSpace V2 Float t
@@ -70,27 +88,20 @@ renderState style state =
   where
     pixelGrid = case Image.size <$> rsImage state of
       Nothing         -> mempty
-      Just (Size w h) -> grid (styGrid style) (fromIntegral w) (fromIntegral h)
+      Just (Size w h) -> grid (style^.gridStyle)
+                              (fromIntegral w)
+                              (fromIntegral h)
 
 ---- Pixel grid
-
--- | Style for a pixel grid.
-data GridStyle
-  = GridStyle
-    { gsBorderLineOWidth :: Float
-    , gsBorderLineColor  :: Colour Double
-    , gsGridLineOWidth   :: Float
-    , gsGridLineColor    :: Colour Double
-    }
 
 -- | Default style for a pixel grid.
 defaultGridStyle :: GridStyle
 defaultGridStyle
   = GridStyle
-    { gsBorderLineOWidth = 2.0
-    , gsBorderLineColor  = sRGB24 0x00 0x00 0x00
-    , gsGridLineOWidth   = 2.0
-    , gsGridLineColor    = sRGB24 0x00 0x00 0x00
+    { _borderLineOutputWidth = 2.0
+    , _borderLineColor       = sRGB24 0x00 0x00 0x00
+    , _gridLineOutputWidth   = 2.0
+    , _gridLineColor         = sRGB24 0x00 0x00 0x00
     }
 
 -- | Pixel grid diagram.
@@ -112,8 +123,8 @@ grid style nWide nHigh = border <> verticalLines <> horizontalLines
     border =
       D.rect width height
       # D.translate (V2 (width/2) (height/2))
-      # D.lc (gsBorderLineColor style)
-      # D.lwO (gsBorderLineOWidth style)
+      # D.lc (style^.borderLineColor)
+      # D.lwO (style^.borderLineOutputWidth)
       # D.lineJoin D.LineJoinRound
 
     verticalLines =
@@ -123,8 +134,8 @@ grid style nWide nHigh = border <> verticalLines <> horizontalLines
       , let p1 = D.mkP2 x 0
       , let p2 = D.mkP2 x height
       ]
-      # D.lc (gsGridLineColor style)
-      # D.lwO (gsGridLineOWidth style)
+      # D.lc (style^.gridLineColor)
+      # D.lwO (style^.gridLineOutputWidth)
 
     horizontalLines =
       mconcat
@@ -133,5 +144,5 @@ grid style nWide nHigh = border <> verticalLines <> horizontalLines
       , let p1 = D.mkP2 0 y
       , let p2 = D.mkP2 width y
       ]
-      # D.lc (gsGridLineColor style)
-      # D.lwO (gsGridLineOWidth style)
+      # D.lc (style^.gridLineColor)
+      # D.lwO (style^.gridLineOutputWidth)

@@ -23,6 +23,8 @@ library
     , diagrams-lib
     , diagrams-rasterific
     , lens
+    , optics
+    , optics-th
     , raindrop
     , vector
 
