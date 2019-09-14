@@ -2,23 +2,27 @@
 Module      : AlphaStencilDiagrams.Diagrams
 Description : Diagrams for AlphaStencil state.
 -}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE TemplateHaskell  #-}
-{-# LANGUAGE TypeFamilies     #-}
+{-# LANGUAGE FlexibleContexts    #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TemplateHaskell     #-}
+{-# LANGUAGE TypeFamilies        #-}
 module AlphaStencilDiagrams.Diagrams where
 
-import           Data.Colour                (Colour)
+import           Data.Colour                (Colour, blend)
 import           Data.Colour.SRGB           (sRGB24)
 import           Data.Vector                (Vector)
 import qualified Data.Vector                as V
 import           Diagrams.Prelude           (HasStyle, InSpace, TrailLike,
                                              Transformable, V2 (V2), ( # ))
 import qualified Diagrams.Prelude           as D
+import           Foreign.Storable           (Storable)
 
 import           AlphaStencilDiagrams.State (AnimAction (OutputFrame, SkipToNext),
                                              RenderState, RenderStep,
                                              rsAnimAction, rsImage, rsState)
-import           Image                      (Size (Size))
+import           GHC.Float                  (float2Double)
+import           Image                      (I (I), Image, Ix (Ix), J (J),
+                                             Size (Size))
 import qualified Image
 import           Optics                     ((^.))
 import qualified Optics.TH
@@ -35,16 +39,25 @@ data GridStyle
     }
 Optics.TH.makeLenses ''GridStyle
 
+-- | Style for an image.
+newtype ImageStyle
+  = ImageStyle
+    { _pixelColorFn :: Float -> Colour Double
+    }
+Optics.TH.makeLenses ''ImageStyle
+
 data Style
   = Style
-    { _gridStyle :: GridStyle
+    { _gridStyle  :: GridStyle
+    , _imageStyle :: ImageStyle
     }
 Optics.TH.makeLenses ''Style
 
 defaultStyle :: Style
 defaultStyle
   = Style
-    { _gridStyle = defaultGridStyle
+    { _gridStyle  = defaultGridStyle
+    , _imageStyle = defaultImageStyle
     }
 
 ---- Rendering Functions ------------------------------------------------------
@@ -54,7 +67,9 @@ renderMultipleSteps
      , TrailLike t
      , HasStyle t
      , Transformable t
-     , Monoid t )
+     , Monoid t
+     , Real a
+     , Storable a )
   => Style
   -> Vector (RenderStep a)
   -> Vector t
@@ -65,7 +80,9 @@ renderSingleStep
      , TrailLike t
      , HasStyle t
      , Transformable t
-     , Monoid t )
+     , Monoid t
+     , Real a
+     , Storable a )
   => Style
   -> RenderStep a
   -> Maybe t
@@ -79,18 +96,24 @@ renderState
      , TrailLike t
      , HasStyle t
      , Transformable t
-     , Monoid t )
+     , Monoid t
+     , Real a
+     , Storable a )
   => Style
   -> RenderState a
   -> t
-renderState style state =
-  pixelGrid
+renderState style state
+  =  pixelGrid
+  <> imageRects
   where
     pixelGrid = case Image.size <$> rsImage state of
       Nothing         -> mempty
       Just (Size w h) -> grid (style^.gridStyle)
                               (fromIntegral w)
                               (fromIntegral h)
+    imageRects = case rsImage state of
+      Nothing  -> mempty
+      Just img -> image (style^.imageStyle) img
 
 ---- Pixel grid
 
@@ -146,3 +169,75 @@ grid style nWide nHigh = border <> verticalLines <> horizontalLines
       ]
       # D.lc (style^.gridLineColor)
       # D.lwO (style^.gridLineOutputWidth)
+
+---- Image
+
+-- | Bi-colour image function.
+--
+-- This function uses three linearly-interpolated colours to produce a function
+-- from a magnitude to a pixel colour:
+--   - Zero colour
+--   - Negative colour
+--   - Positive colour
+-- Additionally, it takes a magnitude, which is the maximum expected magnitude
+-- of the floating-point magnitude.
+biColor
+  :: Colour Double
+  -> Colour Double
+  -> Colour Double
+  -> Float
+  -> Float
+  -> Colour Double
+biColor zeroColour negColour posColour maxMag = colorFn
+  where
+    colorFn :: Float -> Colour Double
+    colorFn x
+      | x >= 0    = blend frac posColour zeroColour
+      | otherwise = blend frac negColour zeroColour
+      where
+        frac = float2Double $ abs x / abs maxMag
+
+-- | Default style for images.
+defaultImageStyle :: ImageStyle
+defaultImageStyle = ImageStyle (biColor zc nc pc 1.0)
+  where
+    zc = sRGB24 0xFF 0xFF 0xFF
+    nc = sRGB24 0xE8 0x7A 0xBC
+    pc = sRGB24 0x9F 0xE8 0x7A
+
+-- | Render an image with unit-square pixels.
+image
+  :: forall t a.
+     ( InSpace V2 Float t
+     , TrailLike t
+     , Transformable t
+     , HasStyle t
+     , Monoid t
+     , Real a
+     , Storable a )
+  => ImageStyle
+  -> Image a
+  -> t
+image style img
+  =   mconcat
+  $   renderCell
+  <$> [ Ix i j
+      | i <- I <$> [ 0 .. width  - 1 ]
+      , j <- J <$> [ 0 .. height - 1 ]
+      ]
+  where
+    sz = Image.size img
+    width  = fromIntegral . Image.width  $ sz
+    height = fromIntegral . Image.height $ sz
+    pxColor ix
+      = style^.pixelColorFn
+      $ fromRational . toRational
+      $ Image.getPixel img ix
+
+    renderCell :: Ix -> t
+    renderCell ix@(Ix (I i) (J j))
+      = D.rect 1 1
+      # D.translateX (fromIntegral i + 0.5)
+      # D.translateY (fromIntegral j + 0.5)
+      # D.lwO 0
+      # D.fc (pxColor ix)

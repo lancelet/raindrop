@@ -14,14 +14,15 @@ module AlphaStencilDiagrams.State
   , interpretEvents
   ) where
 
-import           Foreign.Storable (Storable)
+import           Control.Applicative (liftA)
+import           Foreign.Storable    (Storable)
 
-import           AlphaStencil     (Seg)
-import qualified AlphaStencil.Log as Log
-import           AlphaStencil.Seg (ClipSeg, PxDivision)
-import           Data.Vector      (Vector)
-import qualified Data.Vector      as V
-import           Image            (I, Image, Ix, J)
+import           AlphaStencil        (Seg)
+import qualified AlphaStencil.Log    as Log
+import           AlphaStencil.Seg    (ClipSeg, PxDivision)
+import           Data.Vector         (Vector)
+import qualified Data.Vector         as V
+import           Image               (I, Image, Ix, J)
 import qualified Image
 
 data RenderStep a
@@ -91,12 +92,23 @@ interpretEvent event s = case event of
     OutputFrame
   Log.EPxAdd ix value ->
     RenderStep
-    s { rsPxSet = Just (ix, value) }
+    s { rsImage = liftA (addToPixel ix value) (rsImage s)
+      , rsPxSet = Just (ix, value) }
     OutputFrame
   Log.EProjArea i jMax value ->
     RenderStep
     s { rsProjArea = Just (i, jMax, value) }
     OutputFrame
+
+addToPixel
+  :: ( Storable a, Num a )
+  => Ix
+  -> a
+  -> Image a
+  -> Image a
+addToPixel ix value img = Image.setPixel img ix newValue
+  where
+    newValue = value + Image.getPixel img ix
 
 interpretEvents
   :: forall a.
