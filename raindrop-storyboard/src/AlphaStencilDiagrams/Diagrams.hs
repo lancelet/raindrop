@@ -123,7 +123,7 @@ defaultGridStyle
   = GridStyle
     { _borderLineOutputWidth = 2.0
     , _borderLineColor       = sRGB24 0x00 0x00 0x00
-    , _gridLineOutputWidth   = 2.0
+    , _gridLineOutputWidth   = 0.6
     , _gridLineColor         = sRGB24 0x00 0x00 0x00
     }
 
