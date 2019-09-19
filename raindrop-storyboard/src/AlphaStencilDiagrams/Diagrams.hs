@@ -8,23 +8,27 @@ Description : Diagrams for AlphaStencil state.
 {-# LANGUAGE TypeFamilies        #-}
 module AlphaStencilDiagrams.Diagrams where
 
-import           Data.Colour                (Colour, blend)
-import           Data.Colour.SRGB           (sRGB24)
-import           Data.Vector                (Vector)
-import qualified Data.Vector                as V
-import           Diagrams.Prelude           (HasStyle, InSpace, TrailLike,
-                                             Transformable, V2 (V2), ( # ))
-import qualified Diagrams.Prelude           as D
-import           Foreign.Storable           (Storable)
+import           Data.Colour                      (Colour, blend)
+import           Data.Colour.SRGB                 (sRGB24)
+import           Data.Vector                      (Vector)
+import qualified Data.Vector                      as V
+import           Diagrams.Prelude                 (HasStyle, InSpace, TrailLike,
+                                                   Transformable, V2 (V2),
+                                                   ( # ))
+import qualified Diagrams.Prelude                 as D
+import           Foreign.Storable                 (Storable)
 
-import           AlphaStencilDiagrams.State (AnimAction (OutputFrame, SkipToNext),
-                                             RenderState, RenderStep,
-                                             rsAnimAction, rsImage, rsState)
-import           GHC.Float                  (float2Double)
-import           Image                      (I (I), Image, Ix (Ix), J (J),
-                                             Size (Size))
+import           AlphaStencil                     (P (P))
+import           AlphaStencilDiagrams.SamplePaths (Loop (Loop), Path (Path))
+import           AlphaStencilDiagrams.State       (AnimAction (OutputFrame, SkipToNext),
+                                                   RenderState, RenderStep,
+                                                   rsAnimAction, rsImage,
+                                                   rsState)
+import           GHC.Float                        (float2Double)
+import           Image                            (I (I), Image, Ix (Ix), J (J),
+                                                   Size (Size))
 import qualified Image
-import           Optics                     ((^.))
+import           Optics                           ((^.))
 import qualified Optics.TH
 
 ---- Styles -------------------------------------------------------------------
@@ -46,10 +50,19 @@ newtype ImageStyle
     }
 Optics.TH.makeLenses ''ImageStyle
 
+-- | Style for a path.
+data PathStyle
+  = PathStyle
+    { _pathLineOutputWidth :: Float
+    , _pathLineColor       :: Colour Double
+    }
+Optics.TH.makeLenses ''PathStyle
+
 data Style
   = Style
     { _gridStyle  :: GridStyle
     , _imageStyle :: ImageStyle
+    , _pathStyle  :: PathStyle
     }
 Optics.TH.makeLenses ''Style
 
@@ -58,6 +71,7 @@ defaultStyle
   = Style
     { _gridStyle  = defaultGridStyle
     , _imageStyle = defaultImageStyle
+    , _pathStyle  = defaultPathStyle
     }
 
 ---- Rendering Functions ------------------------------------------------------
@@ -71,9 +85,10 @@ renderMultipleSteps
      , Real a
      , Storable a )
   => Style
+  -> Path a
   -> Vector (RenderStep a)
   -> Vector t
-renderMultipleSteps style = V.mapMaybe (renderSingleStep style)
+renderMultipleSteps style rpath = V.mapMaybe (renderSingleStep style rpath)
 
 renderSingleStep
   :: ( InSpace V2 Float t
@@ -84,11 +99,12 @@ renderSingleStep
      , Real a
      , Storable a )
   => Style
+  -> Path a
   -> RenderStep a
   -> Maybe t
-renderSingleStep style step =
+renderSingleStep style rpath step =
   case rsAnimAction step of
-    OutputFrame -> Just $ renderState style (rsState step)
+    OutputFrame -> Just $ renderState style rpath (rsState step)
     SkipToNext  -> Nothing
 
 renderState
@@ -100,12 +116,15 @@ renderState
      , Real a
      , Storable a )
   => Style
+  -> Path a
   -> RenderState a
   -> t
-renderState style state
-  =  pixelGrid
+renderState style rpath state
+  =  pathOutlines
+  <> pixelGrid
   <> imageRects
   where
+    pathOutlines = path (style^.pathStyle) rpath
     pixelGrid = case Image.size <$> rsImage state of
       Nothing         -> mempty
       Just (Size w h) -> grid (style^.gridStyle)
@@ -241,3 +260,45 @@ image style img
       # D.translateY (fromIntegral j + 0.5)
       # D.lwO 0
       # D.fc (pxColor ix)
+
+---- Path outline
+
+defaultPathStyle :: PathStyle
+defaultPathStyle
+  = PathStyle
+    { _pathLineOutputWidth = 4.5
+    , _pathLineColor       = sRGB24 0xEF 0xC6 0xA4
+    }
+
+-- | Path outline diagram.
+path
+  :: ( Monoid t
+     , InSpace V2 Float t
+     , TrailLike t
+     , HasStyle t
+     , Real a )
+  => PathStyle
+  -> Path a
+  -> t
+path style (Path loops) = mconcat $ loop style <$> loops
+
+-- | Path loop diagram.
+loop
+  :: forall t a.
+     ( InSpace V2 Float t
+     , TrailLike t
+     , HasStyle t
+     , Real a )
+  => PathStyle
+  -> Loop a
+  -> t
+loop style (Loop points)
+  = D.fromVertices (p2v <$> (points ++ [head points]))
+  # D.lc (style^.pathLineColor)
+  # D.lwO (style^.pathLineOutputWidth)
+  where
+    p2v :: P a -> D.P2 Float
+    p2v (P x y) = D.p2 (a2f x, a2f y)
+
+    a2f :: a -> Float
+    a2f = realToFrac

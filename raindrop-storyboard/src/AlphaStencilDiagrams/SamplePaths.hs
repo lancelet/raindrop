@@ -4,19 +4,20 @@ Description : Sample paths for the alpha stencil diagrams.
 -}
 {-# LANGUAGE ScopedTypeVariables #-}
 module AlphaStencilDiagrams.SamplePaths
-  ( -- * Functions
-    hashSymbol
+  ( -- * Types
+    Path(Path)
+  , Loop(Loop)
+    -- * Functions
+  , hashSymbol
+  , pathToSegs
   ) where
 
 import           Data.Maybe   (catMaybes)
 
-import           AlphaStencil (Epsilon (Epsilon), P (P), Seg, seg)
+import           AlphaStencil (Epsilon, P (P), Seg, seg)
 
-hashSymbol :: [Seg Float]
-hashSymbol = pathToSegs (Epsilon 1e-5) hashSymbolPath
-
-data Path a = Path [Loop a]
-data Loop a = Loop [P a]
+newtype Path a = Path [Loop a]
+newtype Loop a = Loop [P a]
 
 pathToSegs :: (Ord a, Fractional a) => Epsilon a -> Path a -> [Seg a]
 pathToSegs eps (Path ls) = concat $ loopToSegs eps <$> ls
@@ -32,8 +33,8 @@ loopToSegs eps (Loop (pf:ps)) = catMaybes (followTrail pf (pf:ps))
     followTrail firstPt (p : q : ss) =
       seg eps p q : followTrail firstPt (q : ss)
 
-hashSymbolPath :: Path Float
-hashSymbolPath =
+hashSymbol :: Path Float
+hashSymbol =
   Path
   [ Loop
     [ P  3.70  1.00  -- bottom right corner; outer loop

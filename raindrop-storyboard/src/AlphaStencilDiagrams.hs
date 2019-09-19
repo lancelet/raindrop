@@ -16,19 +16,24 @@ import           AlphaStencil                     (Epsilon (Epsilon),
                                                    logRenderSegs)
 import           AlphaStencilDiagrams.Diagrams    (defaultStyle,
                                                    renderMultipleSteps)
-import           AlphaStencilDiagrams.SamplePaths (hashSymbol)
+import           AlphaStencilDiagrams.SamplePaths (hashSymbol, pathToSegs)
 import           AlphaStencilDiagrams.State       (interpretEvents)
 import           Image                            (Size (Size))
 
 animateRenderingHashSymbol :: FilePath -> IO ()
 animateRenderingHashSymbol filePath = do
   let
-    (_, events) = logRenderSegs (Epsilon 1e-5) (Size 16 16) hashSymbol
+    path = hashSymbol
+    eps = Epsilon 1e-5
+    (_, events) = logRenderSegs
+                  eps
+                  (Size 16 16)
+                  (pathToSegs eps path)
     renderSteps = interpretEvents events
-    addBG d = D.bg D.white $ D.frame 0.1 $ d
+    addBG d = D.bg D.white $ D.frame 0.1 d
     diagrams = V.toList
                $ V.map addBG
-               $ renderMultipleSteps defaultStyle renderSteps
+               $ renderMultipleSteps defaultStyle path renderSteps
     diaSize = D.dims (D.V2 (1024 :: Float) 1024)
 
   forM_ (zip [0..] diagrams) $ \(i :: Int, dia) -> do
