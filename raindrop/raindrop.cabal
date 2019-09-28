@@ -26,11 +26,11 @@ library
     Image.Types
   build-depends:
       base
-    , mtl                ^>=2.2.2
-    , mutable-containers ^>=0.3.4
-    , primitive          ^>=0.6.4.0
-    , transformers       ^>=0.5.6.2
-    , vector             ^>=0.12.0.3
+    , mtl
+    , mutable-containers
+    , primitive
+    , transformers
+    , vector
 
 test-suite raindrop-test
   type:             exitcode-stdio-1.0
@@ -47,20 +47,20 @@ test-suite raindrop-test
     Image.TypesTest
   build-depends:
       base
-    , doctest            ^>=0.16.1
+    , doctest
     , raindrop
-    , hedgehog           ^>=1.0
-    , mtl                ^>=2.2.2
-    , mutable-containers ^>=0.3.4
-    , vector             ^>=0.12.0.3
+    , hedgehog
+    , mtl
+    , mutable-containers
+    , vector
 
 executable raindrop
   main-is:          Main.hs
   hs-source-dirs:   app
   default-language: Haskell2010
   build-depends:
-      base                   ^>=4.12.0.0
-    , JuicyPixels            ^>=3.3.3.1
-    , JuicyPixels-extra      ^>=0.4.1
+      base
+    , JuicyPixels
+    , JuicyPixels-extra
     , raindrop
-    , vector                 ^>=0.12.0.3
+    , vector

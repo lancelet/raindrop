@@ -1,11 +1,28 @@
-resolver: lts-14.5
+resolver: nightly-2019-09-27
 packages:
-  - raindrop
-  - raindrop-storyboard
+- raindrop
+- raindrop-storyboard
 extra-deps:
-  - github: lancelet/stack-hpc-coveralls
-    commit: a5955d9e5b51ae1be690c3c588d53ea74a102cf6
-  - optics-0.1@sha256:f15690905f4500bd57ee8399fc36200e62360aeed974de9032a93841cc820b06,5851
-  - optics-th-0.1@sha256:c9d47fdf384a2c515ad6faeea9d5da99ac4a3d351ccec3a28f100e040d65bcd4,1913
-  - optics-core-0.1@sha256:301a7ec522495868a8969a6ad74913c569a1492ba455e5f3c6fcc65f16f500ca,4402
-  - optics-extra-0.1@sha256:87c94fa6c2265c26b55c20654dcb6917f7aac04b1d7df473997eb221c8bcc80e,3265
+- github: lancelet/stack-hpc-coveralls
+  commit: a5955d9e5b51ae1be690c3c588d53ea74a102cf6
+- github: lancelet/active
+  commit: c21421492aba010b14ac4cc522f45d5d8c0ff9c8
+- github: diagrams/diagrams-core
+  commit: a411e057bd840086c9e27d5199e10fd3274ef035
+- github: lancelet/dual-tree
+  commit: 4d69e72108e70e058d81320f9d917ad93d282a33
+- github: diagrams/monoid-extras
+  commit: 1252c0e2c3e8db45dcee704573f0aeebe6d5fa6d
+- github: diagrams/diagrams-solve
+  commit: 5fc7f3cbbe7e12857c6e9d8a498de76743a7604d
+- github: lancelet/diagrams-lib
+  commit: 05dc1bd97405401374bea09a0792922ade676f31
+- github: lancelet/diagrams-rasterific
+  commit: c41e405f4eff2934dfe523e73bc6e009ebf11453
+- github: lancelet/FontyFruity
+  commit: 67fe04e47f5e632c8e81db734204d8b4f4321a13
+- Rasterific-0.7.4.4@sha256:05ca492a2c95e65da8d120281f5e579321cfe47b586a5730dce54ae1c52d1557,6008
+- optics-0.1@sha256:f15690905f4500bd57ee8399fc36200e62360aeed974de9032a93841cc820b06,5851
+- optics-th-0.1@sha256:c9d47fdf384a2c515ad6faeea9d5da99ac4a3d351ccec3a28f100e040d65bcd4,1913
+- optics-core-0.1@sha256:301a7ec522495868a8969a6ad74913c569a1492ba455e5f3c6fcc65f16f500ca,4402
+- optics-extra-0.1@sha256:87c94fa6c2265c26b55c20654dcb6917f7aac04b1d7df473997eb221c8bcc80e,3265

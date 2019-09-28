@@ -18,7 +18,7 @@ library
     AlphaStencilDiagrams.SamplePaths
     AlphaStencilDiagrams.State
   build-depends:
-      base ^>=4.12.0.0
+      base
     , colour
     , diagrams-lib
     , diagrams-rasterific
@@ -33,6 +33,6 @@ executable raindrop-storyboard
   hs-source-dirs:      app
   default-language:    Haskell2010
   build-depends:
-      base ^>=4.12.0.0
+      base
     , raindrop
     , raindrop-storyboard
