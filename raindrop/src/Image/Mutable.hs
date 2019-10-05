@@ -38,15 +38,21 @@ module Image.Mutable
   , rowMajor
   , unsafeModify
   , lindexUnsafe
-  ) where
+  )
+where
 
-import           Control.Monad.Primitive      (PrimMonad, PrimState)
-import           Data.Vector.Storable.Mutable (MVector)
-import qualified Data.Vector.Storable.Mutable as M
-import           Foreign.Storable             (Storable)
+import           Control.Monad.Primitive        ( PrimMonad
+                                                , PrimState
+                                                )
+import           Data.Vector.Storable.Mutable   ( MVector )
+import qualified Data.Vector.Storable.Mutable  as M
+import           Foreign.Storable               ( Storable )
 
-import           Image.Types                  (I (I), Ix (Ix), J (J),
-                                               Size (Size))
+import           Image.Types                    ( I(I)
+                                                , Ix(Ix)
+                                                , J(J)
+                                                , Size(Size)
+                                                )
 
 -- | Mutable image.
 --
@@ -71,9 +77,9 @@ new
   -> a                           -- ^ Value for all pixels.
   -> m (MImage (PrimState m) a)  -- ^ Created image.
 new sz@(Size w h) x = MImage sz <$> M.replicate vecLen x
-  where
-    vecLen :: Int
-    vecLen = fromIntegral (w*h)
+ where
+  vecLen :: Int
+  vecLen = fromIntegral (w * h)
 
 -- | Modify a single pixel of a mutable image.
 --
@@ -84,8 +90,8 @@ unsafeModify
   -> (a -> a)                -- ^ Pure modification function.
   -> Ix                      -- ^ Index.
   -> m ()                    -- ^ Action.
-unsafeModify (MImage sz vec) modFn ix
-  = M.unsafeModify vec modFn (lindexUnsafe sz ix)
+unsafeModify (MImage sz vec) modFn ix =
+  M.unsafeModify vec modFn (lindexUnsafe sz ix)
 
 -- | Linear index into an image.
 --
@@ -93,9 +99,9 @@ unsafeModify (MImage sz vec) modFn ix
 --
 -- No bounds checks are performed.
 lindexUnsafe :: Size -> Ix -> Int
-lindexUnsafe (Size w _) (Ix (I i) (J j)) = i' + j'*w'
-  where
-    i', j', w' :: Int
-    i' = fromIntegral i
-    j' = fromIntegral j
-    w' = fromIntegral w
+lindexUnsafe (Size w _) (Ix (I i) (J j)) = i' + j' * w'
+ where
+  i', j', w' :: Int
+  i' = fromIntegral i
+  j' = fromIntegral j
+  w' = fromIntegral w

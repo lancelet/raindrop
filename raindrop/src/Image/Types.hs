@@ -12,14 +12,17 @@ module Image.Types
     Size(Size, width, height)
   , I(I, unI)
   , J(J, unJ)
-  , Ix(Ix)
+  , Ix
+    ( Ix
     -- * Functions
+    )
   , inRangeI
   , inRangeJ
-  ) where
+  )
+where
 
-import           Data.Word        (Word32)
-import           Foreign.Storable (Storable)
+import           Data.Word                      ( Word32 )
+import           Foreign.Storable               ( Storable )
 
 -- | Size of an image.
 data Size

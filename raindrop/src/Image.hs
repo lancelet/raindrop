@@ -21,9 +21,12 @@ module Image
   , I(I, unI)
   , J(J, unJ)
   , Ix(Ix)
-  , Image(size, rowMajor)
+  , Image
+    ( size
+    , rowMajor
     -- * Functions
     -- ** Creation and Freezing
+    )
   , new
   , unsafeFreeze
     -- ** Checking ranges
@@ -33,17 +36,24 @@ module Image
   , setPixel
   , getPixel
   , lindex
-  ) where
+  )
+where
 
-import           Control.Monad.Primitive (PrimMonad, PrimState)
-import           Data.Vector.Storable    (Vector)
-import qualified Data.Vector.Storable    as V
-import           Foreign.Storable        (Storable)
+import           Control.Monad.Primitive        ( PrimMonad
+                                                , PrimState
+                                                )
+import           Data.Vector.Storable           ( Vector )
+import qualified Data.Vector.Storable          as V
+import           Foreign.Storable               ( Storable )
 
-import qualified Image.Mutable           as M
-import           Image.Types             (I (I, unI), Ix (Ix), J (J, unJ),
-                                          Size (Size, height, width), inRangeI,
-                                          inRangeJ)
+import qualified Image.Mutable                 as M
+import           Image.Types                    ( I(I, unI)
+                                                , Ix(Ix)
+                                                , J(J, unJ)
+                                                , Size(Size, height, width)
+                                                , inRangeI
+                                                , inRangeJ
+                                                )
 
 -- | Image, with pixels of type 'a'.
 data Image a
@@ -67,8 +77,7 @@ data Image a
 -- >>> V.toList $ rowMajor $ setPixel image (Ix (I 1) (J 1)) 3
 -- [0,0,0,0,3,0]
 setPixel :: Storable a => Image a -> Ix -> a -> Image a
-setPixel (Image sz vec) ix value =
-  Image sz (vec V.// [(lindex sz ix, value)])
+setPixel (Image sz vec) ix value = Image sz (vec V.// [(lindex sz ix, value)])
 
 -- | Get a pixel from an immutable image.
 --
@@ -91,9 +100,9 @@ new
   -> a        -- ^ Element to fill all pixels of the image.
   -> Image a  -- ^ Produced image.
 new sz@(Size w h) x = Image sz (V.replicate vecLen x)
-  where
-    vecLen :: Int
-    vecLen = fromIntegral (w*h)
+ where
+  vecLen :: Int
+  vecLen = fromIntegral (w * h)
 
 -- | Freeze a mutable image to an immutable one without copying.
 unsafeFreeze
@@ -106,11 +115,8 @@ unsafeFreeze mImage =
 -- | Create a row-major linear index.
 lindex :: Size -> Ix -> Int
 lindex sz ix@(Ix i j)
-  | inRange = M.lindexUnsafe sz ix
-  | otherwise = error
-                $ "Index is out of range: "
-                <> show ix
-                <> ". Image size: "
-                <> show sz
-  where
-    inRange = inRangeI sz i && inRangeJ sz j
+  | inRange
+  = M.lindexUnsafe sz ix
+  | otherwise
+  = error $ "Index is out of range: " <> show ix <> ". Image size: " <> show sz
+  where inRange = inRangeI sz i && inRangeJ sz j

@@ -11,7 +11,8 @@ module Image.Loop
     loop
   , inc
   , dec
-  ) where
+  )
+where
 
 -- | Basic loop.
 --
@@ -33,16 +34,16 @@ module Image.Loop
 -- Done
 --
 loop
-    :: (Monad m)
-    => a            -- ^ Starting value of the loop.
-    -> (a -> Bool)  -- ^ Terminate when this function returns False.
-    -> (a -> a)     -- ^ State transition / step function.
-    -> (a -> m ())  -- ^ Body of the loop.
-    -> m ()         -- ^ Loop action.
+  :: (Monad m)
+  => a            -- ^ Starting value of the loop.
+  -> (a -> Bool)  -- ^ Terminate when this function returns False.
+  -> (a -> a)     -- ^ State transition / step function.
+  -> (a -> m ())  -- ^ Body of the loop.
+  -> m ()         -- ^ Loop action.
 loop start while step body = go start
-  where
-    go !i | while i   = body i >> go (step i)
-          | otherwise = return ()
+ where
+  go !i | while i   = body i >> go (step i)
+        | otherwise = return ()
 {-# INLINE loop #-}
 
 -- | Increment a value.

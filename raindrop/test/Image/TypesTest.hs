@@ -3,17 +3,26 @@ Module      : Image.TypesTest
 Description : Tests for the Image.Types module.
 -}
 {-# LANGUAGE OverloadedStrings #-}
-module Image.TypesTest (tests) where
+module Image.TypesTest
+  ( tests
+  )
+where
 
-import           Hedgehog       ((===))
-import qualified Hedgehog       as H
-import qualified Hedgehog.Gen   as Gen
-import qualified Hedgehog.Range as Range
+import           Hedgehog                       ( (===) )
+import qualified Hedgehog                      as H
+import qualified Hedgehog.Gen                  as Gen
+import qualified Hedgehog.Range                as Range
 
-import           Image.Types    (I (I), J (J), Size (Size), inRangeI, inRangeJ)
+import           Image.Types                    ( I(I)
+                                                , J(J)
+                                                , Size(Size)
+                                                , inRangeI
+                                                , inRangeJ
+                                                )
 
 tests :: H.Group
-tests = H.Group "Image.Types"
+tests = H.Group
+  "Image.Types"
   [ ("inRangeI is in range", prop_inRangeI)
   , ("inRangeJ is in range", prop_inRangeJ)
   ]

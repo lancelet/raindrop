@@ -1,7 +1,6 @@
 module Main where
 
-import AlphaStencilDiagrams (animateRenderingHashSymbol)
+import           AlphaStencilDiagrams           ( animateRenderingHashSymbol )
 
 main :: IO ()
-main =
-  animateRenderingHashSymbol "test.gif"
+main = animateRenderingHashSymbol "test.gif"

@@ -7,30 +7,55 @@ module AlphaStencil.Render
   ( -- * Functions
     renderSegs
   , logRenderSegs
-  ) where
+  )
+where
 
-import           Control.Monad.Primitive (PrimMonad, PrimState)
-import           Control.Monad.ST        (runST)
-import           Data.Foldable           (traverse_)
-import           Data.Vector             (Vector)
-import           Foreign.Storable        (Storable)
+import           Control.Monad.Primitive        ( PrimMonad
+                                                , PrimState
+                                                )
+import           Control.Monad.ST               ( runST )
+import           Data.Foldable                  ( traverse_ )
+import           Data.Vector                    ( Vector )
+import           Foreign.Storable               ( Storable )
 
-import           AlphaStencil.Log        (Event (EClipSegToColumn, ENewImage,
-                                                 EProjArea, EPxAdd, EPxDivision,
-                                                 EStartSeg),
-                                          Logger (NoOp, Record), logMessage,
-                                          mkRecordingLogger, retrieveLog)
-import           AlphaStencil.Seg        (Epsilon, Seg, clip, pixelXRange,
-                                          pixelYRange, projXArea, pxDivision,
-                                          pxDivisionArea, segSign, unClipSeg)
-import           Image                   (Image, Ix (Ix), Size, unsafeFreeze)
-import           Image.Loop              (dec, inc, loop)
-import           Image.Mutable           (MImage)
-import qualified Image.Mutable           as M
+import           AlphaStencil.Log               ( Event
+                                                  ( EClipSegToColumn
+                                                  , ENewImage
+                                                  , EProjArea
+                                                  , EPxAdd
+                                                  , EPxDivision
+                                                  , EStartSeg
+                                                  )
+                                                , Logger(NoOp, Record)
+                                                , logMessage
+                                                , mkRecordingLogger
+                                                , retrieveLog
+                                                )
+import           AlphaStencil.Seg               ( Epsilon
+                                                , Seg
+                                                , clip
+                                                , pixelXRange
+                                                , pixelYRange
+                                                , projXArea
+                                                , pxDivision
+                                                , pxDivisionArea
+                                                , segSign
+                                                , unClipSeg
+                                                )
+import           Image                          ( Image
+                                                , Ix(Ix)
+                                                , Size
+                                                , unsafeFreeze
+                                                )
+import           Image.Loop                     ( dec
+                                                , inc
+                                                , loop
+                                                )
+import           Image.Mutable                  ( MImage )
+import qualified Image.Mutable                 as M
 
 renderSegs
-  :: ( Foldable t
-     , RealFrac a, Storable a, Show a )
+  :: (Foldable t, RealFrac a, Storable a, Show a)
   => Epsilon a
   -> Size
   -> t (Seg a)
@@ -41,8 +66,7 @@ renderSegs eps sz segs = runST $ do
   unsafeFreeze mImg
 
 logRenderSegs
-  :: ( Foldable t
-     , RealFrac a, Storable a, Show a )
+  :: (Foldable t, RealFrac a, Storable a, Show a)
   => Epsilon a
   -> Size
   -> t (Seg a)
@@ -54,12 +78,11 @@ logRenderSegs eps sz segs = runST $ do
   logMessage logger $ ENewImage sz
   traverse_ (renderSeg logger eps mImg) segs
   logEvents <- retrieveLog recordingLogger
-  image <- unsafeFreeze mImg
+  image     <- unsafeFreeze mImg
   pure (image, logEvents)
 
 renderSeg
-  :: ( PrimMonad m
-     , RealFrac a, Storable a, Show a )
+  :: (PrimMonad m, RealFrac a, Storable a, Show a)
   => Logger (Event a) m
   -> Epsilon a
   -> MImage (PrimState m) a
@@ -67,27 +90,22 @@ renderSeg
   -> m ()
 renderSeg logger eps mImg seg = do
   logMessage logger $ EStartSeg seg
-  let
-    (minI, maxI) = pixelXRange eps seg
+  let (minI, maxI) = pixelXRange eps seg
   loop minI (<= maxI) inc $ \i -> do
-    let
-      clipSeg = clip i seg
-      (minJ, maxJ) = pixelYRange eps clipSeg
+    let clipSeg      = clip i seg
+        (minJ, maxJ) = pixelYRange eps clipSeg
     logMessage logger $ EClipSegToColumn i seg clipSeg
     loop maxJ (>= minJ) dec $ \j -> do
-      let
-        ix = Ix i j
-        divs = pxDivision clipSeg j
-        sign = segSign . unClipSeg $ clipSeg
-        area = pxDivisionArea sign divs
+      let ix   = Ix i j
+          divs = pxDivision clipSeg j
+          sign = segSign . unClipSeg $ clipSeg
+          area = pxDivisionArea sign divs
       logMessage logger $ EPxDivision ix divs
       M.unsafeModify mImg (+ area) ix
       logMessage logger $ EPxAdd ix area
-    let
-      projArea = projXArea clipSeg
+    let projArea = projXArea clipSeg
     logMessage logger $ EProjArea i (minJ - 1) projArea
     loop (minJ - 1) (>= 0) dec $ \j -> do
-      let
-        ix = Ix i j
+      let ix = Ix i j
       M.unsafeModify mImg (+ projArea) ix
       logMessage logger $ EPxAdd ix projArea

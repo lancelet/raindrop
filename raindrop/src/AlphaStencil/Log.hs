@@ -31,26 +31,47 @@ An example in the 'Control.Monad.ST.ST' monad:
 {-# LANGUAGE ScopedTypeVariables #-}
 module AlphaStencil.Log
   ( -- * Types
-    Event(ENewImage, EStartSeg, EClipSegToColumn, EPxDivision, EPxAdd,
-          EProjArea)
+    Event
+    ( ENewImage
+    , EStartSeg
+    , EClipSegToColumn
+    , EPxDivision
+    , EPxAdd
+    , EProjArea
+    )
   , Logger(NoOp, Record)
   , RecordingLogger
     -- * Functions
   , logMessage
   , mkRecordingLogger
   , retrieveLog
-  ) where
+  )
+where
 
-import           Control.Monad.Primitive (PrimMonad)
-import           Data.Maybe              (fromMaybe)
-import           Data.Mutable            (asDLList, asSRef, modifyRef, newColl,
-                                          newRef, popFront, pushBack, readRef,
-                                          writeRef)
-import           Data.Vector             (Vector)
-import qualified Data.Vector             as V
+import           Control.Monad.Primitive        ( PrimMonad )
+import           Data.Maybe                     ( fromMaybe )
+import           Data.Mutable                   ( asDLList
+                                                , asSRef
+                                                , modifyRef
+                                                , newColl
+                                                , newRef
+                                                , popFront
+                                                , pushBack
+                                                , readRef
+                                                , writeRef
+                                                )
+import           Data.Vector                    ( Vector )
+import qualified Data.Vector                   as V
 
-import           AlphaStencil.Seg        (ClipSeg, PxDivision, Seg)
-import           Image                   (I, J, Ix, Size)
+import           AlphaStencil.Seg               ( ClipSeg
+                                                , PxDivision
+                                                , Seg
+                                                )
+import           Image                          ( I
+                                                , J
+                                                , Ix
+                                                , Size
+                                                )
 
 -- | Events produced during primitive drawing operations.
 data Event a
@@ -77,7 +98,7 @@ logMessage
   => Logger msg m  -- ^ Logger to use.
   -> msg           -- ^ Message to log.
   -> m ()
-logMessage NoOp _              = pure ()
+logMessage NoOp        _       = pure ()
 logMessage (Record rl) message = rlLogger rl message
 
 -- | Type of logger.
@@ -95,26 +116,22 @@ data RecordingLogger msg m
     }
 
 -- | Create a recording logger.
-mkRecordingLogger
-  :: forall m msg.
-     PrimMonad m
-  => m (RecordingLogger msg m)
+mkRecordingLogger :: forall  m msg . PrimMonad m => m (RecordingLogger msg m)
 mkRecordingLogger = do
   countRef <- asSRef <$> newRef (0 :: Int)
   coll     <- asDLList <$> newColl
 
-  let
-    fromJust :: Maybe t -> t
-    fromJust = fromMaybe (error "Logger: mismatch in number of events!")
+  let fromJust :: Maybe t -> t
+      fromJust = fromMaybe (error "Logger: mismatch in number of events!")
 
-    logAction :: msg -> m ()
-    logAction msg = modifyRef countRef (+ 1) >> pushBack coll msg
+      logAction :: msg -> m ()
+      logAction msg = modifyRef countRef (+ 1) >> pushBack coll msg
 
-    retrLog :: m (Vector msg)
-    retrLog = do
-      count <- readRef countRef
-      writeRef countRef 0
-      V.replicateM count (fromJust <$> popFront coll)
+      retrLog :: m (Vector msg)
+      retrLog = do
+        count <- readRef countRef
+        writeRef countRef 0
+        V.replicateM count (fromJust <$> popFront coll)
 
   pure $ RecordingLogger logAction retrLog
 

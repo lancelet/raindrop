@@ -4,16 +4,25 @@ Description : Main entry point for tests.
 -}
 module Main where
 
-import           Hedgehog                (Group, checkParallel)
-import qualified Test.DocTest            as DocTest
+import           Hedgehog                       ( Group
+                                                , checkParallel
+                                                )
+import qualified Test.DocTest                  as DocTest
 
-import qualified AlphaStencil.LogTest    as AlphaStencil.Log (tests)
-import qualified AlphaStencil.RenderTest as AlphaStencil.Render (tests)
-import qualified AlphaStencil.SegTest    as AlphaStencil.Seg (tests)
-import qualified Image.LoopTest          as Image.Loop (tests)
-import qualified Image.MutableTest       as Image.Mutable (tests)
-import qualified Image.TypesTest         as Image.Types (tests)
-import qualified ImageTest               as Image (tests)
+import qualified AlphaStencil.LogTest          as AlphaStencil.Log
+                                                ( tests )
+import qualified AlphaStencil.RenderTest       as AlphaStencil.Render
+                                                ( tests )
+import qualified AlphaStencil.SegTest          as AlphaStencil.Seg
+                                                ( tests )
+import qualified Image.LoopTest                as Image.Loop
+                                                ( tests )
+import qualified Image.MutableTest             as Image.Mutable
+                                                ( tests )
+import qualified Image.TypesTest               as Image.Types
+                                                ( tests )
+import qualified ImageTest                     as Image
+                                                ( tests )
 
 main :: IO ()
 main = do
@@ -44,8 +53,7 @@ runDocTests = do
   putStrLn "---- Finished DocTests ----"
 
 docTests :: IO ()
-docTests =
-  DocTest.doctest
+docTests = DocTest.doctest
   [ "-isrc"
   , "src/AlphaStencil/Log.hs"
   , "src/AlphaStencil/Render.hs"
