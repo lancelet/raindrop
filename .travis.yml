@@ -9,7 +9,7 @@ dist: xenial
 language: generic
 
 env:
-  - GHCVER=8.6.5 STACK_YAML="$(pwd)/stack.yaml"
+  - GHCVER=8.8.1 STACK_YAML="$(pwd)/stack.yaml"
 
 # Caching so the next build will be fast too.
 cache:
