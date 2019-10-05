@@ -2,9 +2,10 @@ resolver: nightly-2019-10-05
 packages:
 - raindrop
 - raindrop-storyboard
+allow-newer: true
 extra-deps:
 - github: lancelet/stack-hpc-coveralls
-  commit: a5955d9e5b51ae1be690c3c588d53ea74a102cf6
+  commit: d6685b1457e062c622ca28c481de4f452ea7333e
 - github: lancelet/active
   commit: c21421492aba010b14ac4cc522f45d5d8c0ff9c8
 - github: diagrams/diagrams-core
@@ -21,12 +22,14 @@ extra-deps:
   commit: c41e405f4eff2934dfe523e73bc6e009ebf11453
 - github: lancelet/FontyFruity
   commit: 67fe04e47f5e632c8e81db734204d8b4f4321a13
+- github: lancelet/docopt.hs
+  commit: 6cfd4da1b2b0a04ec1ce53ed17869f3c4a9de5df
+- github: GaloisInc/RSA
+  commit: a174f5d6b0b194349949a2d5dcb26bfc15fbcc9e
 - Rasterific-0.7.4.4@sha256:05ca492a2c95e65da8d120281f5e579321cfe47b586a5730dce54ae1c52d1557,6008
 - optics-0.1@sha256:f15690905f4500bd57ee8399fc36200e62360aeed974de9032a93841cc820b06,5851
 - optics-th-0.1@sha256:c9d47fdf384a2c515ad6faeea9d5da99ac4a3d351ccec3a28f100e040d65bcd4,1913
 - optics-core-0.1@sha256:301a7ec522495868a8969a6ad74913c569a1492ba455e5f3c6fcc65f16f500ca,4402
 - optics-extra-0.1@sha256:87c94fa6c2265c26b55c20654dcb6917f7aac04b1d7df473997eb221c8bcc80e,3265
-- docopt-0.7.0.5@sha256:0ff280d90aa667350f743623708107bdef427a49b64b1bdf3df15905d8cbe345,3540
 - wreq-0.5.3.2@sha256:eb1d848e983a1d1b8960c28840b55e56d8b3d760e9d014b5d9d018b13439e63f,5570
 - authenticate-oauth-1.6@sha256:ba9e93e7b949fa4799ae7b3cb302df38dc7fb0be0460803b6c48636317b2bcbb,1604
-- RSA-2.3.1@sha256:08d12882ee93735e41afb981a4c73b4209ce92b11f730622cf76785db26fdb93,2463
