@@ -16,23 +16,15 @@ NOTE: It would probably be better to use @massiv@ for images in general, but
 {-# LANGUAGE DerivingStrategies         #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 module Image
-  ( -- * Types (re-exports)
-    Size(Size, width, height)
+  ( Size(Size, width, height)
   , I(I, unI)
   , J(J, unJ)
   , Ix(Ix)
-  , Image
-    ( size
-    , rowMajor
-    -- * Functions
-    -- ** Creation and Freezing
-    )
+  , Image(size, rowMajor)
   , new
   , unsafeFreeze
-    -- ** Checking ranges
   , inRangeI
   , inRangeJ
-    -- ** Getting and setting pixels
   , setPixel
   , getPixel
   , lindex

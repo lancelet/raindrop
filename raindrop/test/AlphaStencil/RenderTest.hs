@@ -15,9 +15,7 @@ import qualified Hedgehog.Gen                  as Gen
 import qualified Hedgehog.Range                as Range
 
 import           Data.Functor.Identity          ( Identity )
-import           Data.List                      ( sort
-                                                , zipWith
-                                                )
+import           Data.List                      ( sort )
 import           Data.Maybe                     ( catMaybes
                                                 , mapMaybe
                                                 )

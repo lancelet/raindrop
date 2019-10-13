@@ -1,13 +1,9 @@
 {-|
 -}
 module AlphaStencil
-  ( -- * Types
-    P(P)
+  ( P(P)
   , Seg
-  , Epsilon
-    ( Epsilon
-    -- * Functions
-    )
+  , Epsilon(Epsilon)
   , seg
   , renderSegs
   , logRenderSegs

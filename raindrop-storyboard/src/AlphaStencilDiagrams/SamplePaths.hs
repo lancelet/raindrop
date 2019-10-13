@@ -4,12 +4,8 @@ Description : Sample paths for the alpha stencil diagrams.
 -}
 {-# LANGUAGE ScopedTypeVariables #-}
 module AlphaStencilDiagrams.SamplePaths
-  ( -- * Types
-    Path(Path)
-  , Loop
-    ( Loop
-    -- * Functions
-    )
+  ( Path(Path)
+  , Loop(Loop)
   , hashSymbol
   , pathToSegs
   )

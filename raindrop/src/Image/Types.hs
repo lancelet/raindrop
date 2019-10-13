@@ -8,14 +8,10 @@ the image ('I', 'J' and 'Ix').
 {-# LANGUAGE DerivingStrategies         #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 module Image.Types
-  ( -- * Types
-    Size(Size, width, height)
+  ( Size(Size, width, height)
   , I(I, unI)
   , J(J, unJ)
-  , Ix
-    ( Ix
-    -- * Functions
-    )
+  , Ix(Ix)
   , inRangeI
   , inRangeJ
   )

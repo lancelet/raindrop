@@ -22,9 +22,7 @@ import           Control.Exception              ( ErrorCall
                                                 )
 import           Data.Functor.Identity          ( Identity )
 import           Data.Maybe                     ( fromMaybe )
-import           Data.Ratio                     ( Rational
-                                                , (%)
-                                                )
+import           Data.Ratio                     ( (%) )
 
 import           AlphaStencil.Seg               ( Epsilon(Epsilon)
                                                 , P(P, ptx)

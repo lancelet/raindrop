@@ -5,8 +5,7 @@ Description : Line segments and pixel intersections.
 {-# LANGUAGE DerivingStrategies  #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 module AlphaStencil.Seg
-  ( -- * Types
-    P(P, ptx, pty)
+  ( P(P, ptx, pty)
   , Epsilon(Epsilon, unEpsilon)
   , Sign(Plus, Minus)
   , Gradient(Gradient, unGradient)
@@ -14,13 +13,7 @@ module AlphaStencil.Seg
   , Poly(Poly)
   , Seg(segSign, segP, segQ, segPoly)
   , ClipSeg(unClipSeg)
-  , PxDivision
-    ( PxDivision
-    , pdDxa
-    , pdDxb
-    , pdDyc
-    -- * Functions
-    )
+  , PxDivision(PxDivision, pdDxa, pdDxb, pdDyc)
   , seg
   , pixelXRange
   , pixelYRange

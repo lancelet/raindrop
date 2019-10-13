@@ -5,14 +5,9 @@ Description : Interpreting AlphaStencil events into a renderable state.
 {-# LANGUAGE DerivingStrategies  #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 module AlphaStencilDiagrams.State
-  ( -- * Types
-    RenderStep(rsState, rsAnimAction)
+  ( RenderStep(rsState, rsAnimAction)
   , RenderState(rsImage, rsSeg, rsClipSeg, rsPxDivision, rsPxSet, rsProjArea)
-  , AnimAction
-    ( OutputFrame
-    , SkipToNext
-    -- * Functions
-    )
+  , AnimAction(OutputFrame, SkipToNext)
   , interpretEvents
   )
 where
