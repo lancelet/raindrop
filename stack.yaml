@@ -1,4 +1,4 @@
-resolver: nightly-2019-10-05
+resolver: nightly-2019-10-10
 packages:
 - raindrop
 - raindrop-storyboard
