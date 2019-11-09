@@ -1,35 +1,15 @@
-resolver: nightly-2019-10-10
+resolver: nightly-2019-11-09
 packages:
 - raindrop
 - raindrop-storyboard
 allow-newer: true
 extra-deps:
-- github: lancelet/stack-hpc-coveralls
-  commit: d6685b1457e062c622ca28c481de4f452ea7333e
-- github: lancelet/active
-  commit: c21421492aba010b14ac4cc522f45d5d8c0ff9c8
-- github: diagrams/diagrams-core
-  commit: a411e057bd840086c9e27d5199e10fd3274ef035
-- github: lancelet/dual-tree
-  commit: 4d69e72108e70e058d81320f9d917ad93d282a33
-- github: diagrams/monoid-extras
-  commit: 1252c0e2c3e8db45dcee704573f0aeebe6d5fa6d
-- github: diagrams/diagrams-solve
-  commit: 5fc7f3cbbe7e12857c6e9d8a498de76743a7604d
-- github: lancelet/diagrams-lib
-  commit: 05dc1bd97405401374bea09a0792922ade676f31
-- github: lancelet/diagrams-rasterific
-  commit: c41e405f4eff2934dfe523e73bc6e009ebf11453
-- github: lancelet/FontyFruity
-  commit: 67fe04e47f5e632c8e81db734204d8b4f4321a13
-- github: lancelet/docopt.hs
-  commit: 6cfd4da1b2b0a04ec1ce53ed17869f3c4a9de5df
-- github: GaloisInc/RSA
-  commit: a174f5d6b0b194349949a2d5dcb26bfc15fbcc9e
+- active-0.2.0.14@sha256:181131051459253ffe867ba145791ffb94ff8f8b02332421397619a5e6fb019e,1764
+- diagrams-core-1.4.2@sha256:8de4baded626214d0d5c62d60ff230fd580d4383ae19e5efeea4dec720728dd2,2912
+- diagrams-lib-1.4.3@sha256:a0339e290e7b080a742afceb91831aa10b117038e1039ecdc7ddd3f1be456e89,8032
+- diagrams-rasterific-1.4.1.1@sha256:ce98ee86847de4dd9ce6a5347be6c6ff7af5fd779ff43f9b03d1620cb5cbf9c9,3169
+- diagrams-solve-0.1.1@sha256:8ed66891bb42f9cd5e77b02a0f8ebaa91a2363a82a007313f90c7f57806688fa,1713
+- dual-tree-0.2.2.1@sha256:9ff31e461d873ae74ba51d93b454c0c4094726d7cb78a0c454394c965e83539d,2830
+- FontyFruity-0.5.3.5@sha256:d0bbbc5bef14f229c8e90271365916b1b470bc0928ff4670f7d1885aec3378cf,2166
+- monoid-extras-0.5.1@sha256:2324414ed6cfa57f38d5d7e3e676b0dfdba0d070a8b12df78bb71eb84d2b1d2d,2242
 - Rasterific-0.7.4.4@sha256:05ca492a2c95e65da8d120281f5e579321cfe47b586a5730dce54ae1c52d1557,6008
-- optics-0.1@sha256:f15690905f4500bd57ee8399fc36200e62360aeed974de9032a93841cc820b06,5851
-- optics-th-0.1@sha256:c9d47fdf384a2c515ad6faeea9d5da99ac4a3d351ccec3a28f100e040d65bcd4,1913
-- optics-core-0.1@sha256:301a7ec522495868a8969a6ad74913c569a1492ba455e5f3c6fcc65f16f500ca,4402
-- optics-extra-0.1@sha256:87c94fa6c2265c26b55c20654dcb6917f7aac04b1d7df473997eb221c8bcc80e,3265
-- wreq-0.5.3.2@sha256:eb1d848e983a1d1b8960c28840b55e56d8b3d760e9d014b5d9d018b13439e63f,5570
-- authenticate-oauth-1.6@sha256:ba9e93e7b949fa4799ae7b3cb302df38dc7fb0be0460803b6c48636317b2bcbb,1604
