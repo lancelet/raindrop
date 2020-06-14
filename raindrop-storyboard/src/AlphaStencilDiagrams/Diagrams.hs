@@ -173,9 +173,9 @@ renderState style rpath state = clipSeg <> pathOutlines <> pixelGrid <> imageRec
 
 -- | Default style for a pixel grid.
 defaultGridStyle :: GridStyle
-defaultGridStyle = GridStyle { _borderLineOutputWidth = 2.0
+defaultGridStyle = GridStyle { _borderLineOutputWidth = 4.0
                              , _borderLineColor       = sRGB24 0x00 0x00 0x00
-                             , _gridLineOutputWidth   = 0.6
+                             , _gridLineOutputWidth   = 2.0
                              , _gridLineColor         = sRGB24 0x00 0x00 0x00
                              }
 
@@ -248,8 +248,8 @@ defaultImageStyle :: ImageStyle
 defaultImageStyle = ImageStyle (biColor zc nc pc 1.0)
  where
   zc = sRGB24 0xFF 0xFF 0xFF
-  nc = sRGB24 0xE8 0x7A 0xBC
-  pc = sRGB24 0x9F 0xE8 0x7A
+  nc = sRGB24 0xA1 0x27 0x6F
+  pc = sRGB24 0x4B 0x82 0x26
 
 -- | Render an image with unit-square pixels.
 image
@@ -287,9 +287,9 @@ image style img =
 ---- Path outline
 
 defaultPathStyle :: PathStyle
-defaultPathStyle = PathStyle { _pathLineOutputWidth = 4.5
+defaultPathStyle = PathStyle { _pathLineOutputWidth = 8.0
                              , _pathLineColor       = sRGB24 0xEF 0xC6 0xA4
-                             , _pathClipSegOutputWidth = 6.0
+                             , _pathClipSegOutputWidth = 12.0
                              , _pathClipSegColor       = sRGB24 0xFE 0x40 0x40
                              }
 
