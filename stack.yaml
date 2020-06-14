@@ -1,15 +1,6 @@
-resolver: nightly-2019-11-09
+resolver: lts-16.0
 packages:
 - raindrop
 - raindrop-storyboard
 allow-newer: true
 extra-deps:
-- active-0.2.0.14@sha256:181131051459253ffe867ba145791ffb94ff8f8b02332421397619a5e6fb019e,1764
-- diagrams-core-1.4.2@sha256:8de4baded626214d0d5c62d60ff230fd580d4383ae19e5efeea4dec720728dd2,2912
-- diagrams-lib-1.4.3@sha256:a0339e290e7b080a742afceb91831aa10b117038e1039ecdc7ddd3f1be456e89,8032
-- diagrams-rasterific-1.4.1.1@sha256:ce98ee86847de4dd9ce6a5347be6c6ff7af5fd779ff43f9b03d1620cb5cbf9c9,3169
-- diagrams-solve-0.1.1@sha256:8ed66891bb42f9cd5e77b02a0f8ebaa91a2363a82a007313f90c7f57806688fa,1713
-- dual-tree-0.2.2.1@sha256:9ff31e461d873ae74ba51d93b454c0c4094726d7cb78a0c454394c965e83539d,2830
-- FontyFruity-0.5.3.5@sha256:d0bbbc5bef14f229c8e90271365916b1b470bc0928ff4670f7d1885aec3378cf,2166
-- monoid-extras-0.5.1@sha256:2324414ed6cfa57f38d5d7e3e676b0dfdba0d070a8b12df78bb71eb84d2b1d2d,2242
-- Rasterific-0.7.4.4@sha256:05ca492a2c95e65da8d120281f5e579321cfe47b586a5730dce54ae1c52d1557,6008

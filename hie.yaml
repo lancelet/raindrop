@@ -1,0 +1,16 @@
+cradle:
+  stack:
+    - path: "raindrop/src"
+      component: "raindrop:lib"
+
+    - path: "raindrop/test"
+      component: "raindrop:test:raindrop-test"
+
+    - path: "raindrop/app/Main.hs"
+      component: "raindrop:exe:raindrop"
+
+    - path: "raindrop-storyboard/src"
+      component: "raindrop-storyboard:lib"
+
+    - path: "raindrop-storyboard/app/Main.hs"
+      component: "raindrop-storyboard:exe:raindrop-storyboard"

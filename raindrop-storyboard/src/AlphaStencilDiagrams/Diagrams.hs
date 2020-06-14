@@ -24,7 +24,8 @@ import           Diagrams.Prelude               ( HasStyle
 import qualified Diagrams.Prelude              as D
 import           Foreign.Storable               ( Storable )
 
-import           AlphaStencil                   ( P(P) )
+import           AlphaStencil                   ( P(P), Seg )
+import AlphaStencil.Seg (unClipSeg, segP, segQ)
 import           AlphaStencilDiagrams.SamplePaths
                                                 ( Loop(Loop)
                                                 , Path(Path)
@@ -38,6 +39,7 @@ import           AlphaStencilDiagrams.State     ( AnimAction
                                                 , rsAnimAction
                                                 , rsImage
                                                 , rsState
+                                                , rsClipSeg
                                                 )
 import           GHC.Float                      ( float2Double )
 import           Image                          ( I(I)
@@ -72,8 +74,10 @@ Optics.TH.makeLenses ''ImageStyle
 -- | Style for a path.
 data PathStyle
   = PathStyle
-    { _pathLineOutputWidth :: Float
-    , _pathLineColor       :: Colour Double
+    { _pathLineOutputWidth    :: Float
+    , _pathLineColor          :: Colour Double
+    , _pathClipSegOutputWidth :: Float
+    , _pathClipSegColor       :: Colour Double
     }
 Optics.TH.makeLenses ''PathStyle
 
@@ -126,7 +130,8 @@ renderSingleStep style rpath step = case rsAnimAction step of
   SkipToNext  -> Nothing
 
 renderState
-  :: ( InSpace V2 Float t
+  :: forall t a.
+     ( InSpace V2 Float t
      , TrailLike t
      , HasStyle t
      , Transformable t
@@ -138,8 +143,23 @@ renderState
   -> Path a
   -> RenderState a
   -> t
-renderState style rpath state = pathOutlines <> pixelGrid <> imageRects
+renderState style rpath state = clipSeg <> pathOutlines <> pixelGrid <> imageRects
  where
+  clipSeg = case rsClipSeg state of
+    Nothing -> mempty
+    Just (_i, clipSeg) ->
+      D.fromVertices (p2v <$> [segP seg, segQ seg])
+      # D.lc (style ^. pathStyle ^. pathClipSegColor)
+      # D.lwO (style ^. pathStyle ^. pathClipSegOutputWidth)
+      where
+        seg :: Seg a
+        seg = unClipSeg clipSeg
+
+        p2v :: P a -> D.P2 Float
+        p2v (P x y) = D.p2 (a2f x, a2f y)
+
+        a2f :: a -> Float
+        a2f = realToFrac
   pathOutlines = path (style ^. pathStyle) rpath
   pixelGrid    = case Image.size <$> rsImage state of
     Nothing -> mempty
@@ -269,6 +289,8 @@ image style img =
 defaultPathStyle :: PathStyle
 defaultPathStyle = PathStyle { _pathLineOutputWidth = 4.5
                              , _pathLineColor       = sRGB24 0xEF 0xC6 0xA4
+                             , _pathClipSegOutputWidth = 6.0
+                             , _pathClipSegColor       = sRGB24 0xFE 0x40 0x40
                              }
 
 -- | Path outline diagram.
